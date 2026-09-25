@@ -1,6 +1,8 @@
 import httpx
 from bs4 import BeautifulSoup
 
+import json
+import pandas as pd
 
 BASEURL="https://aisat.linways.com"
 LOGINURL=f"{BASEURL}/student/index.php?next=%2Fstudent%2Fstudent.php%3Fmenu%3Dhome"
@@ -29,6 +31,26 @@ def linwayslogin(username: str, password: str) -> httpx.Client:
         print("Fail")
         return None
 
+def htmlparser(response: str) -> pd.DataFrame:
+    htmlcontent=json.loads(response)["data"]
+    df=pd.read_html(htmlcontent)[0]
+
+    df.columns=df.columns.str.strip()
+    df=df.drop(columns=['Attendance Percentage in Class','Duty Leave Hours'])
+
+    df=df.rename(columns={
+        df.columns[1]: "subjectname",
+        df.columns[2]: "attended",
+        df.columns[3]: "conducted",
+        df.columns[4]: "percentage",
+    })
+
+    df=df.dropna(subset=["subjectname", "attended", "conducted"])
+    df["attended"] = pd.to_numeric(df["attended"], errors="coerce")
+    df["conducted"] = pd.to_numeric(df["conducted"], errors="coerce")
+
+    return df[["subjectname", "attended", "conducted"]]
+
 def main():
     session=linwayslogin(username,password)
     if session:
@@ -43,8 +65,10 @@ def main():
         response=session.get(subjectwiseurl,headers=ajaxheaders)
         print(f"Code: {response.status_code}")
         print(f"Type: {response.headers.get('content-type')}")
-        print(f"Sample: {response.text[:1000]}")
+        #print(f"Sample: {response.text[:1000]}")
 
+        df=htmlparser(response.text)
+        print(df)
 
 if __name__=="__main__":
     main()
