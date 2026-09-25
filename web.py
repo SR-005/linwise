@@ -8,7 +8,7 @@ LOGINURL=f"{BASEURL}/student/index.php?next=%2Fstudent%2Fstudent.php%3Fmenu%3Dho
 username="P012CSOM23"
 password="Sreeram2005"
 
-def linwayssession(username: str, password: str) -> httpx.Client:
+def linwayslogin(username: str, password: str) -> httpx.Client:
     headers={
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
         "Referer": f"{BASEURL}/student/index.php",
@@ -29,8 +29,22 @@ def linwayssession(username: str, password: str) -> httpx.Client:
         print("Fail")
         return None
 
-if __name__=="__main__":
-    session=linwayssession(username,password)
+def main():
+    session=linwayslogin(username,password)
     if session:
-        dashboardres = session.get(f"{BASEURL}/student/student.php?menu=home")
-        print(f"[+] Successfully fetched dashboard ({len(dashboardres.text)} bytes)")
+        subjectwiseurl=f"{BASEURL}/student/attendance/ajax/ajax_subjectwise_attendance.php?action=GET_REPORT"
+
+        ajaxheaders={
+            "X-Requested-With": "XMLHttpRequest",
+            "Referer": f"{BASEURL}/student/student.php?menu=attendance",
+            "Accept": "*/*"
+        }
+
+        response=session.get(subjectwiseurl,headers=ajaxheaders)
+        print(f"Code: {response.status_code}")
+        print(f"Type: {response.headers.get('content-type')}")
+        print(f"Sample: {response.text[:1000]}")
+
+
+if __name__=="__main__":
+    main()
