@@ -20,3 +20,17 @@ def getattendence(studentid: str) -> dict:
     record=db.collection("students").document(studentid).get()
     attendence=record.to_dict().get("subjects",{}) if record.exists else {}
     return attendence
+
+def savetimetable(studentid: str, timetabledata: dict):
+    cleanedtimetable={}
+    for day,periods in timetabledata.items():
+        cleanedday=day.lower().strip()
+        cleanedtimetable[cleanedday]=periods
+
+    timetableobj=db.collection("students").document(studentid)
+    timetableobj.set({"timetable": cleanedtimetable})
+    print("Time Table saved to Firebase")
+
+def gettimetable(studentid: str) -> dict:
+    record=db.collection("students").document(studentid).get()
+    return record.to_dict().get("timetable",{}) if record.exists else {}
