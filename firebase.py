@@ -15,3 +15,8 @@ def saveattendence(studentid: str, df: pd.DataFrame):
 
     db.collection("students").document(studentid).set({"subjects": records})
     print("Data is saved to db")
+
+def getattendence(studentid: str) -> dict:
+    record=db.collection("students").document(studentid).get()
+    attendence=record.to_dict().get("subjects",{}) if record.exists else {}
+    return attendence
