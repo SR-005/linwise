@@ -4,7 +4,8 @@ from bs4 import BeautifulSoup
 import json
 import pandas as pd
 
-from firebase import saveattendence
+from firebase import saveattendence, getattendence
+from computations import attendencedetails
 
 BASEURL="https://aisat.linways.com"
 LOGINURL=f"{BASEURL}/student/index.php?next=%2Fstudent%2Fstudent.php%3Fmenu%3Dhome"
@@ -72,9 +73,15 @@ def main():
         #print(f"Sample: {response.text[:1000]}")
 
         df=htmlparser(response.text)
-        print(df)
 
         saveattendence(username,df)
+        attendencereport=getattendence(username)
+        print(attendencereport.items())
+
+        result=attendencedetails(attendencereport, targetpercentage=75.0)
+        for r in result:
+            print(f"1. {r} \n")
+        
 
 if __name__=="__main__":
     main()
