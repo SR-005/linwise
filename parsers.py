@@ -6,9 +6,13 @@ from pydantic import BaseModel, Field
 from google import genai
 from google.genai import types
 
-from firebase import getattendence
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-def htmlparser(response: str) -> pd.DataFrame:
+from firebase import saveattendence, getattendence, savetimetable
+
+def attendenceparser(studentid: str, response: str):
     htmlcontent=json.loads(response)["data"]
     df=pd.read_html(htmlcontent)[0]
 
@@ -28,9 +32,19 @@ def htmlparser(response: str) -> pd.DataFrame:
 
     df = df.drop(df[df["subjectname"] == "Total"].index)
 
-    return df[["subjectname", "attended", "conducted"]]
+    df=df[["subjectname", "attended", "conducted"]]
 
-def timetableparser(studentid: str, imagepath: str) -> Dict[str, List[str]]:
+    saveattendence(studentid,df)
+
+class TimeTableModel(BaseModel):
+    monday: List[str]=Field(description="Ordered list of subject slugs for Monday periods")
+    tuesday: List[str]=Field(description="Ordered list of subject slugs for Tuesday periods")
+    wednesday: List[str]=Field(description="Ordered list of subject slugs for Wednesday periods")
+    thursday: List[str]=Field(description="Ordered list of subject slugs for Thursday periods")
+    friday: List[str]=Field(description="Ordered list of subject slugs for Friday periods")
+    saturday: List[str]=Field(description="Ordered list of subject slugs for Saturday periods")
+
+def timetableparser(studentid: str, imagepath: str):
     attendence=getattendence(studentid)
     
     subjectdict={}
@@ -48,5 +62,21 @@ def timetableparser(studentid: str, imagepath: str) -> Dict[str, List[str]]:
             - If a subject or lab spans multiple consecutive periods/hours, repeat that subject's slug for every period it covers.
             - Return strictly the ordered list of periods for each day.
             """
-if __name__=="__main__":
-    timetableparser("P012CSOM23")
+
+    client=genai.Client()
+    img=Image.open(imagepath)
+
+    response=client.models.generate_content(
+        model="gemini-3.5-flash-lite",
+        contents=[img, prompt],
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=TimeTableModel,
+            temperature=0.1,
+        ),
+    )
+    timetable=json.loads(response.text)
+    savetimetable(studentid,timetable)
+
+'''if __name__=="__main__":
+    timetableparser("P012CSOM23",r"media\timetable.jpeg")'''
