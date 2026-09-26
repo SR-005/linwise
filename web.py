@@ -6,6 +6,7 @@ import pandas as pd
 
 from firebase import saveattendence, getattendence
 from computations import attendencedetails
+from parsers import attendenceparser, timetableparser
 
 BASEURL="https://aisat.linways.com"
 LOGINURL=f"{BASEURL}/student/index.php?next=%2Fstudent%2Fstudent.php%3Fmenu%3Dhome"
@@ -34,54 +35,36 @@ def linwayslogin(username: str, password: str) -> httpx.Client:
         print("Fail")
         return None
 
-def htmlparser(response: str) -> pd.DataFrame:
-    htmlcontent=json.loads(response)["data"]
-    df=pd.read_html(htmlcontent)[0]
+def fetchattendence(session, username: str):
+    subjectwiseurl=f"{BASEURL}/student/attendance/ajax/ajax_subjectwise_attendance.php?action=GET_REPORT"
+    
+    ajaxheaders={
+        "X-Requested-With": "XMLHttpRequest",
+        "Referer": f"{BASEURL}/student/student.php?menu=attendance",
+        "Accept": "*/*"
+    }
 
-    df.columns=df.columns.str.strip()
-    df=df.drop(columns=['Attendance Percentage in Class','Duty Leave Hours'])
+    response=session.get(subjectwiseurl,headers=ajaxheaders)
+    print(f"Response Code: {response.status_code}")
 
-    df=df.rename(columns={
-        df.columns[1]: "subjectname",
-        df.columns[2]: "attended",
-        df.columns[3]: "conducted",
-        df.columns[4]: "percentage",
-    })
+    #df=attendenceparser(response.text)
 
-    df=df.dropna(subset=["subjectname", "attended", "conducted"])
-    df["attended"] = pd.to_numeric(df["attended"], errors="coerce")
-    df["conducted"] = pd.to_numeric(df["conducted"], errors="coerce")
+    '''attendencereport=getattendence(username)
+    result=attendencedetails(attendencereport, targetpercentage=75.0)'''
 
-    df = df.drop(df[df["subjectname"] == "Total"].index)
-
-    return df[["subjectname", "attended", "conducted"]]
+def fetchtimetable(username: str):
+    timetabledict=timetableparser(username,r"media\timetable.jpeg")
 
 def main():
     session=linwayslogin(username,password)
     if session:
-        subjectwiseurl=f"{BASEURL}/student/attendance/ajax/ajax_subjectwise_attendance.php?action=GET_REPORT"
+        print("Session is Active! Fetching Attendence...")
 
-        ajaxheaders={
-            "X-Requested-With": "XMLHttpRequest",
-            "Referer": f"{BASEURL}/student/student.php?menu=attendance",
-            "Accept": "*/*"
-        }
+        #fetchattendence(username)
+        fetchtimetable(username)
 
-        response=session.get(subjectwiseurl,headers=ajaxheaders)
-        print(f"Code: {response.status_code}")
-        print(f"Type: {response.headers.get('content-type')}")
-        #print(f"Sample: {response.text[:1000]}")
-
-        df=htmlparser(response.text)
-
-        saveattendence(username,df)
-        attendencereport=getattendence(username)
-        print(attendencereport.items())
-
-        result=attendencedetails(attendencereport, targetpercentage=75.0)
-        for r in result:
-            print(f"1. {r} \n")
+    else:
+        print("Session is not active. Something Happend :(")
         
-
 if __name__=="__main__":
     main()
