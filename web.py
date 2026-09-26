@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 import json
 import pandas as pd
 
+from firebase import saveattendence
+
 BASEURL="https://aisat.linways.com"
 LOGINURL=f"{BASEURL}/student/index.php?next=%2Fstudent%2Fstudent.php%3Fmenu%3Dhome"
 
@@ -49,6 +51,8 @@ def htmlparser(response: str) -> pd.DataFrame:
     df["attended"] = pd.to_numeric(df["attended"], errors="coerce")
     df["conducted"] = pd.to_numeric(df["conducted"], errors="coerce")
 
+    df = df.drop(df[df["subjectname"] == "Total"].index)
+
     return df[["subjectname", "attended", "conducted"]]
 
 def main():
@@ -69,6 +73,8 @@ def main():
 
         df=htmlparser(response.text)
         print(df)
+
+        saveattendence(username,df)
 
 if __name__=="__main__":
     main()
