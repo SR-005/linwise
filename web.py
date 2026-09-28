@@ -49,10 +49,10 @@ def fetchattendence(session, username: str):
 
     #df=attendenceparser(username,response.text)
 
-    attendencereport=getattendence(username)
+    '''attendencereport=getattendence(username)
     result=attendencedetails(attendencereport, targetpercentage=75.0)
     for r in result:
-        print(r)
+        print(r)'''   
 
 def fetchtimetable(username: str):
     timetabledict=timetableparser(username,r"media\timetable.jpeg")
@@ -62,8 +62,8 @@ def main():
     if session:
         print("Session is Active! Fetching Attendence...")
 
-        fetchattendence(session, username)
-        #fetchtimetable(username)
+        #fetchattendence(session, username)
+        fetchtimetable(username)
 
     else:
         print("Session is not active. Something Happend :(")
