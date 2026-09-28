@@ -5,6 +5,7 @@ from PIL import Image
 from pydantic import BaseModel, Field
 from google import genai
 from google.genai import types
+from pypdf import PdfReader
 
 import os
 from dotenv import load_dotenv
@@ -36,6 +37,8 @@ def attendenceparser(studentid: str, response: str):
 
     saveattendence(studentid,df)
 
+
+
 class TimeTableModel(BaseModel):
     monday: List[str]=Field(description="Ordered list of subject slugs for Monday periods")
     tuesday: List[str]=Field(description="Ordered list of subject slugs for Tuesday periods")
@@ -43,7 +46,6 @@ class TimeTableModel(BaseModel):
     thursday: List[str]=Field(description="Ordered list of subject slugs for Thursday periods")
     friday: List[str]=Field(description="Ordered list of subject slugs for Friday periods")
     saturday: List[str]=Field(description="Ordered list of subject slugs for Saturday periods")
-
 
 def displaytimetable(schedule: Dict[str, List[str]]):
     print("\n" + "=" * 65)
@@ -138,5 +140,75 @@ def timetableparser(studentid: str, imagepath: str):
     savetimetable(studentid,timetable)
 
 
-'''if __name__=="__main__":
-    timetableparser("P012CSOM23",r"media\timetable.jpeg")'''
+
+class AcademicCalenderModel(BaseModel):
+    semesterstart:str=Field(description="Commencement date of classes (YYYY-MM-DD)")
+    semesterend:str=Field(description="Last instructional day / end of classes (YYYY-MM-DD)")
+    holidays:List[str]=Field(description="List of declared holiday dates in YYYY-MM-DD format") 
+
+def calenderparser(calenderpath: str, targetterm: str) -> dict:
+    reader=PdfReader(calenderpath)
+    extractedtext=[]
+
+    for i, page in enumerate(reader.pages):
+        text=page.extract_text() or ""
+        if targetterm.lower() in text.lower():
+            extractedtext.append(f"--- PAGE {i+1} ---\n" + text)
+            print(f"Found Matching Page: {i+1}")
+
+    if not extractedtext:
+        raise ValueError("No Relevent Calender Found. Check the PDF")
+
+    print(extractedtext)
+
+    prompt = f"""
+    You are a generalized, highly accurate academic calendar extractor.
+    Analyze the provided calendar text (which may contain multi-column monthly tables and an "Important Dates / Events" summary).
+
+    Extract the semester schedule according to these universal rules:
+
+    1. SEMESTER TITLE:
+    - Extract the degree, branch, or semester header (e.g., from titles like "Academic Calendar - B. Tech ...").
+
+    2. SEMESTER START:
+    - Locate the date indicating the start of regular classes (look for phrases such as "Commencement of Classes", "Classes Begin", or the matching milestone in the "Important Dates/Events" summary).
+    - Format strictly as YYYY-MM-DD.
+
+    3. SEMESTER END:
+    - Locate the date indicating the final working/instructional day (look for phrases such as "Class Ends", "Last Instructional Day", "Course Completion", or "Publish Attendance and IA Marks" in the table or summary).
+    - Format strictly as YYYY-MM-DD.
+
+    4. HOLIDAYS AND NON-WORKING DAYS:
+    - Identify every date falling between semester_start and semester_end that is designated as a holiday, festival break, or non-instructional day.
+    - A date is considered a holiday if:
+    a) It has a festival, commemorative, or public holiday description (e.g., national holidays, cultural festivals).
+    b) It has an event description but does not increment the instructional class day counter.
+    - Do NOT include regular Sundays unless specifically labeled as a special holiday.
+    - Output all identified holiday dates strictly as a list of ISO date strings (YYYY-MM-DD).
+
+    CALENDAR CONTENT:
+    {extractedtext}
+    """
+    
+    client=genai.Client()
+    response=client.models.generate_content(
+        model="gemini-3.1-flash-lite",
+        contents=[prompt],
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=AcademicCalenderModel,
+            temperature=0.0
+    ))
+
+    result=json.loads(response.text)
+    print("\n--- Extracted Calendar ---")
+    print(f"Title     : {result.get('semester_title')}")
+    print(f"Start     : {result.get('semester_start')}")
+    print(f"End       : {result.get('semester_end')}")
+    print(f"Holidays  : {len(result.get('holidays', []))} days detected")
+    print(f"Sample    : {result.get('holidays')[:5]}...")
+
+
+if __name__=="__main__":
+    #timetableparser("P012CSOM23",r"media\timetable.jpeg")
+    calenderparser(r"media\calender.pdf", "B. Tech S3/S5/S7")
