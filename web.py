@@ -47,10 +47,12 @@ def fetchattendence(session, username: str):
     response=session.get(subjectwiseurl,headers=ajaxheaders)
     print(f"Response Code: {response.status_code}")
 
-    #df=attendenceparser(response.text)
+    #df=attendenceparser(username,response.text)
 
-    '''attendencereport=getattendence(username)
-    result=attendencedetails(attendencereport, targetpercentage=75.0)'''
+    attendencereport=getattendence(username)
+    result=attendencedetails(attendencereport, targetpercentage=75.0)
+    for r in result:
+        print(r)
 
 def fetchtimetable(username: str):
     timetabledict=timetableparser(username,r"media\timetable.jpeg")
@@ -60,8 +62,8 @@ def main():
     if session:
         print("Session is Active! Fetching Attendence...")
 
-        #fetchattendence(username)
-        fetchtimetable(username)
+        fetchattendence(session, username)
+        #fetchtimetable(username)
 
     else:
         print("Session is not active. Something Happend :(")

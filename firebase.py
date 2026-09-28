@@ -13,8 +13,8 @@ def saveattendence(studentid: str, df: pd.DataFrame):
     df["code"]=df["subjectname"].str.replace(r'[^a-zA-Z0-9]', '_', regex=True).str.lower().str.strip('_')       #eliminates every special char
     records=df.set_index("code")[["subjectname", "attended", "conducted"]].to_dict(orient="index")   
 
-    db.collection("students").document(studentid).set({"subjects": records})
-    print("Data is saved to db")
+    db.collection("students").document(studentid).set({"subjects": records}, merge=True)
+    print("Attendence is saved to Firebase")
 
 def getattendence(studentid: str) -> dict:
     record=db.collection("students").document(studentid).get()
@@ -28,7 +28,7 @@ def savetimetable(studentid: str, timetabledata: dict):
         cleanedtimetable[cleanedday]=periods
 
     timetableobj=db.collection("students").document(studentid)
-    timetableobj.set({"timetable": cleanedtimetable})
+    timetableobj.set({"timetable": cleanedtimetable}, merge=True)
     print("Time Table saved to Firebase")
 
 def gettimetable(studentid: str) -> dict:
