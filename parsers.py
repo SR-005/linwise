@@ -1,11 +1,13 @@
 import json
+import re
+from datetime import datetime
 import pandas as pd
-from typing import List,Dict
+from typing import List,Dict, Optional
 from PIL import Image
 from pydantic import BaseModel, Field
 from google import genai
 from google.genai import types
-from pypdf import PdfReader
+import pdfplumber
 
 import os
 from dotenv import load_dotenv
@@ -141,70 +143,93 @@ def timetableparser(studentid: str, imagepath: str):
 
 
 
-class AcademicCalenderModel(BaseModel):
+class HolidayModel(BaseModel):
     semesterstart:str=Field(description="Commencement date of classes (YYYY-MM-DD)")
     semesterend:str=Field(description="Last instructional day / end of classes (YYYY-MM-DD)")
     holidays:List[str]=Field(description="List of declared holiday dates in YYYY-MM-DD format") 
 
+def pagefinder(calenderpath: str, targetterm: str) -> List[int]:
+    contentpages=[]
+    with pdfplumber.open(calenderpath) as pdf:
+        for index, page in enumerate(pdf.pages):
+            text=page.extract_text() or ""
+            text=text.lower().replace("b.tech","b. tech")
+            if targetterm.lower() in text:
+                contentpages.append(index+1)
+
+        if not contentpages:
+            raise ValueError("No Pages with valid Information found :(")
+        else:
+            print(f"Page Numbers: {contentpages}")
+            return contentpages
+
+def dateparser(content: str) -> Optional[str]:
+    match=re.search(r"\b(\d{2})-(\d{2})-(\d{4})\b", content)
+    if match:
+        d, m, y = match.groups()
+        return f"{y}-{m}-{d}"
+    return None
+
 def calenderparser(calenderpath: str, targetterm: str) -> dict:
-    reader=PdfReader(calenderpath)
     extractedtext=[]
+    targetpages=pagefinder(calenderpath, targetterm)
 
-    for i, page in enumerate(reader.pages):
-        text=page.extract_text() or ""
-        if targetterm.lower() in text.lower():
-            extractedtext.append(f"--- PAGE {i+1} ---\n" + text)
-            print(f"Found Matching Page: {i+1}")
+    with pdfplumber.open(calenderpath) as pdf:
+        for pagenumber in targetpages:
+            page=pdf.pages[pagenumber-1]
+            tables=page.extract_tables()
 
-    if not extractedtext:
-        raise ValueError("No Relevent Calender Found. Check the PDF")
+            print(f"Table Content: {tables}")
 
-    print(extractedtext)
+            for table in tables:
+                for row in table:
+                    cleanedrow=[str(cell).replace("\n", " ").strip() if cell else "" for cell in row]
+                    rowtext=" ".join(cleanedrow)
 
-    prompt = f"""
-    You are a generalized, highly accurate academic calendar extractor.
-    Analyze the provided calendar text (which may contain multi-column monthly tables and an "Important Dates / Events" summary).
+                    if "commencement of" in rowtext.lower() and "s3/s5/s7" in rowtext.lower():
+                        for cell in reversed(cleanedrow):
+                            result=dateparser(cell)
+                            if result:
+                                semstart=result
+                                break
 
-    Extract the semester schedule according to these universal rules:
+                    if "class ends" in rowtext.lower():
+                        for cell in reversed(cleanedrow):
+                            result=dateparser(cell)
+                            if result:
+                                semend=result
+                                break
 
-    1. SEMESTER TITLE:
-    - Extract the degree, branch, or semester header (e.g., from titles like "Academic Calendar - B. Tech ...").
+                    extractedtext.append("| " + " | ".join(cleanedrow) + " |")
 
-    2. SEMESTER START:
-    - Locate the date indicating the start of regular classes (look for phrases such as "Commencement of Classes", "Classes Begin", or the matching milestone in the "Important Dates/Events" summary).
-    - Format strictly as YYYY-MM-DD.
+        print(f"Start     : {semstart}")
+        print(f"End       : {semend}")
 
-    3. SEMESTER END:
-    - Locate the date indicating the final working/instructional day (look for phrases such as "Class Ends", "Last Instructional Day", "Course Completion", or "Publish Attendance and IA Marks" in the table or summary).
-    - Format strictly as YYYY-MM-DD.
+        prompt = f"""
+        Analyze the extracted calendar table rows from KTU B.Tech academic calendar.
+        Semester runs from {semstart} to {semend}.
 
-    4. HOLIDAYS AND NON-WORKING DAYS:
-    - Identify every date falling between semester_start and semester_end that is designated as a holiday, festival break, or non-instructional day.
-    - A date is considered a holiday if:
-    a) It has a festival, commemorative, or public holiday description (e.g., national holidays, cultural festivals).
-    b) It has an event description but does not increment the instructional class day counter.
-    - Do NOT include regular Sundays unless specifically labeled as a special holiday.
-    - Output all identified holiday dates strictly as a list of ISO date strings (YYYY-MM-DD).
+        Extract all festival holidays, public holidays, and days marked with non-working events occurring strictly between {semstart} and {semend}.
+        Ensure every date is formatted as YYYY-MM-DD.
 
-    CALENDAR CONTENT:
-    {extractedtext}
-    """
-    
+        CALENDAR ROWS:
+        {chr(10).join(extractedtext)}
+        """
+            
     client=genai.Client()
     response=client.models.generate_content(
         model="gemini-3.1-flash-lite",
         contents=[prompt],
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
-            response_schema=AcademicCalenderModel,
+            response_schema=HolidayModel,
             temperature=0.0
     ))
 
     result=json.loads(response.text)
     print("\n--- Extracted Calendar ---")
-    print(f"Title     : {result.get('semester_title')}")
-    print(f"Start     : {result.get('semester_start')}")
-    print(f"End       : {result.get('semester_end')}")
+    print(f"Start     : {semstart}")
+    print(f"End       : {semend}")
     print(f"Holidays  : {len(result.get('holidays', []))} days detected")
     print(f"Sample    : {result.get('holidays')[:5]}...")
 
