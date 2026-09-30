@@ -9,11 +9,12 @@ from google import genai
 from google.genai import types
 import pdfplumber
 
+
 import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from firebase import saveattendence, getattendence, savetimetable
+from firebase import getstudentdata, saveattendence, getattendence, savetimetable, savedates
 
 def attendenceparser(studentid: str, response: str):
     htmlcontent=json.loads(response)["data"]
@@ -148,6 +149,7 @@ class HolidayModel(BaseModel):
     semesterend:str=Field(description="Last instructional day / end of classes (YYYY-MM-DD)")
     holidays:List[str]=Field(description="List of declared holiday dates in YYYY-MM-DD format") 
 
+
 def pagefinder(calenderpath: str, targetterm: str) -> List[int]:
     contentpages=[]
     with pdfplumber.open(calenderpath) as pdf:
@@ -170,7 +172,7 @@ def dateparser(content: str) -> Optional[str]:
         return f"{y}-{m}-{d}"
     return None
 
-def calenderparser(calenderpath: str, targetterm: str) -> dict:
+def calenderparser(studentid: str, calenderpath: str, targetterm: str) -> dict:
     extractedtext=[]
     targetpages=pagefinder(calenderpath, targetterm)
 
@@ -233,7 +235,14 @@ def calenderparser(calenderpath: str, targetterm: str) -> dict:
     print(f"Holidays  : {len(result.get('holidays', []))} days detected")
     print(f"Sample    : {result.get('holidays')[:5]}...")
 
+    calenderdict={
+        "semesterstart": semstart,
+        "semesterend": semend,
+        "holidays": sorted(list(set(result.get("holidays",[]))))
+    }
+
+    savedates(studentid, calenderdict)
 
 if __name__=="__main__":
     #timetableparser("P012CSOM23",r"media\timetable.jpeg")
-    calenderparser(r"media\calender.pdf", "B. Tech S3/S5/S7")
+    calenderparser("P012CSOM23", r"media\calender.pdf", "B. Tech S3/S5/S7")
