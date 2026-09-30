@@ -6,7 +6,7 @@ import pandas as pd
 
 from firebase import saveattendence, getattendence
 from computations import attendencedetails
-from parsers import attendenceparser, timetableparser
+from parsers import attendenceparser, timetableparser, calenderparser, buildcalendar, editcalendar
 
 BASEURL="https://aisat.linways.com"
 LOGINURL=f"{BASEURL}/student/index.php?next=%2Fstudent%2Fstudent.php%3Fmenu%3Dhome"
@@ -65,13 +65,19 @@ def attendence(session, username: str):
 def timetable(username: str):
     timetabledict=timetableparser(username,r"media\timetable.jpeg")
 
+def calendar(username: str):
+    calenderparser(username,"calenderpath","targetterm")
+    buildcalendar(username)
+    editcalendar(username)
+
 def main():
     session=linwayslogin(username,password)
     if session:
         print("Session is Active! Fetching Attendence...")
 
         #attendence(session, username)
-        timetable(username)
+        #timetable(username)
+        #calendar(username)
 
     else:
         print("Session is not active. Something Happend :(")
