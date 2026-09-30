@@ -149,6 +149,69 @@ class HolidayModel(BaseModel):
     semesterend:str=Field(description="Last instructional day / end of classes (YYYY-MM-DD)")
     holidays:List[str]=Field(description="List of declared holiday dates in YYYY-MM-DD format") 
 
+def editcalender(studentid: str):
+    studentobj,studentdetails=getstudentdata(studentid)
+
+    if not studentdetails.exists:
+        raise ValueError("No valid Student Record Found!")
+
+    studentdetails=studentdetails.to_dict()
+    calendar=studentdetails.get("academicdates", {})
+    timetable=studentdetails.get("timetable", {})
+
+    while True:
+        print("\n" + "=" * 45)
+        print("         SEMESTER CALENDAR MANAGER         ")
+        print("=" * 45)
+        print("1. View schedule for a specific date")
+        print("2. Mark a date as Holiday / Leave")
+        print("3. Reset date to default timetable")
+        print("5. Exit")
+        choice=input("Select an option (1-5): ").strip()
+
+        if choice==1:
+            date=input("Enter the Date(YYYY-MM-DD): ").strip()
+            schedule=calendar.get(date)
+            if not schedule:
+                print("No Schedule for the specified date is found!")
+            else:
+                print(f"\n--- {date} ({schedule['day_of_week'].upper()}) ---")
+                print(f"Status       : {schedule['status'].upper()}")
+                print(f"Effective Day: {schedule.get('effective_day')}")
+                print(f"Note         : {schedule.get('note')}")
+                print(f"Periods      : {schedule.get('periods')}")
+
+        elif choice==2:
+            date=input("Enter the Date to be Marked Holiday(YYYY-MM-DD): ").strip()
+            if date not in calendar:
+                print("Date is incorrect, please check the input again!")
+                continue
+
+            reason=input("Enter the reason for the holiday: ").strip
+            calendar[date]["status"]="holiday"
+            calendar[date]["effective_day"]=None
+            calendar[date]["periods"]=[]
+            calendar[date]["note"]=reason
+
+            studentobj.update({f"academicdates.{date}": calendar[date]})
+            print("Holiday is successfully updated!")
+
+        elif choice==3:
+            date=input("Enter the Date to Reset(YYYY-MM-DD): ").strip()
+            if date not in calendar:
+                print("Date is incorrect, please check the input again!")
+                continue
+
+            dayname=calendar[date]["day_of_week"]
+            calendar[date]["status"]="working" if dayname!="sunday" else "holdiay"
+            calendar[date]["effective_day"] = dayname if dayname != "sunday" else None
+            calendar[date]["periods"] = timetable.get(dayname, []) if dayname != "sunday" else []
+
+            studentobj.update({f"academicdates.{date}": calendar[date]})
+            print("Information for the day has been reset.")
+
+        elif choice=="4":
+            break
 
 def pagefinder(calenderpath: str, targetterm: str) -> List[int]:
     contentpages=[]
