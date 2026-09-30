@@ -12,7 +12,7 @@ STUDENTID="P012CSOM23"
 def getstudentdata(studentid: str):
     studentobj=db.collection("students").document(studentid)
     studentdetails=studentobj.get()
-    return studentdetails
+    return studentobj, studentdetails
 
 def saveattendence(studentid: str, df: pd.DataFrame):
     df["code"]=df["subjectname"].str.replace(r'[^a-zA-Z0-9]', '_', regex=True).str.lower().str.strip('_')       #eliminates every special char
