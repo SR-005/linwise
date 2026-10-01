@@ -149,7 +149,7 @@ class HolidayModel(BaseModel):
 class AcademicCalendarModel(BaseModel):
     semesterstart:str=Field(description="Commencement date of classes (YYYY-MM-DD)")
     semesterend:str=Field(description="Last instructional day / end of classes (YYYY-MM-DD)")
-    holidays:List[str]=Field(description="List of declared holiday dates in YYYY-MM-DD format") 
+    holidays:List[HolidayModel]=Field(description="List of declared holidays with reasons")
 
 def pagefinder(calenderpath: str, targetterm: str) -> List[int]:
     contentpages=[]
@@ -176,6 +176,9 @@ def dateparser(content: str) -> Optional[str]:
 def calenderparser(studentid: str, calenderpath: str, targetterm: str) -> dict:
     extractedtext=[]
     targetpages=pagefinder(calenderpath, targetterm)
+
+    semstart=None
+    semend=None
 
     with pdfplumber.open(calenderpath) as pdf:
         for pagenumber in targetpages:
@@ -243,7 +246,10 @@ def calenderparser(studentid: str, calenderpath: str, targetterm: str) -> dict:
     calenderdict={
         "semesterstart": semstart,
         "semesterend": semend,
-        "holidays": sorted(list(set(result.get("holidays",[]))))
+        "holidays": sorted(
+            {tuple(sorted(d.items())): d for d in result.get("holidays", [])}.values(),
+            key=lambda x: x.get("date", "")  # Change "date" to whichever key holds the date/event name
+        )
     }
 
     savedates(studentid, calenderdict)
