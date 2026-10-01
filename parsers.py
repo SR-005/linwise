@@ -142,9 +142,11 @@ def timetableparser(studentid: str, imagepath: str):
     edittimetable(timetable,subjects)
     savetimetable(studentid,timetable)
 
-
-
 class HolidayModel(BaseModel):
+    date:str=Field(description="Holiday date in YYYY-MM-DD format")
+    reason:str=Field(description="Name or cause of the holiday (e.g., Karkidaka Vavu, Independence Day, Gandhi Jayanthi)")
+
+class AcademicCalendarModel(BaseModel):
     semesterstart:str=Field(description="Commencement date of classes (YYYY-MM-DD)")
     semesterend:str=Field(description="Last instructional day / end of classes (YYYY-MM-DD)")
     holidays:List[str]=Field(description="List of declared holiday dates in YYYY-MM-DD format") 
@@ -206,12 +208,16 @@ def calenderparser(studentid: str, calenderpath: str, targetterm: str) -> dict:
         print(f"Start     : {semstart}")
         print(f"End       : {semend}")
 
-        prompt = f"""
+    prompt=f"""
         Analyze the extracted calendar table rows from KTU B.Tech academic calendar.
         Semester runs from {semstart} to {semend}.
 
         Extract all festival holidays, public holidays, and days marked with non-working events occurring strictly between {semstart} and {semend}.
-        Ensure every date is formatted as YYYY-MM-DD.
+        For each holiday, extract:
+        1. "date": Formatted strictly as YYYY-MM-DD.
+        2. "reason": The exact holiday title or event description found in the row (e.g., "Karkidaka Vavu", "Independence Day", "Gandhi Jayanthi").
+
+        Do not include regular Sundays unless they have a named festival or holiday title.
 
         CALENDAR ROWS:
         {chr(10).join(extractedtext)}
@@ -223,7 +229,7 @@ def calenderparser(studentid: str, calenderpath: str, targetterm: str) -> dict:
         contents=[prompt],
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
-            response_schema=HolidayModel,
+            response_schema=AcademicCalendarModel,
             temperature=0.0
     ))
 
@@ -366,5 +372,5 @@ def editcalendar(studentid: str):
 
 if __name__=="__main__":
     #timetableparser("P012CSOM23",r"media\timetable.jpeg")
-    #calenderparser("P012CSOM23", r"media\calender.pdf", "B. Tech S3/S5/S7")
-    editcalendar("P012CSOM23")
+    calenderparser("P012CSOM23", r"media\calender.pdf", "B. Tech S3/S5/S7")
+    #editcalendar("P012CSOM23")
