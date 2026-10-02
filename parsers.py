@@ -1,5 +1,6 @@
 import json
 import re
+import io
 from datetime import date, timedelta
 import pandas as pd
 from typing import List, Dict, Optional, Any
@@ -40,7 +41,39 @@ def attendenceparser(studentid: str, response: str):
 
     saveattendence(studentid,df)
 
+def periodattendenceparser(htmlcontent: str) -> Dict[str, List[dict]]:
+    tables=pd.read_html(io.StringIO(htmlcontent))
+    if not tables:
+        return {}
 
+    df=tables[0]
+    df.columns=[str(col).strip() for col in df.columns]
+
+    keymap={
+        "P": "present",
+        "A": "absent",
+        "DL": "present",
+        "*": "notmarked"
+    }
+    parseddates={}
+
+    for _,row in df.iterrows():
+        date=str(row.get("Dates", "")).strip()
+        if not date or date.lower()=="nan":
+            continue
+
+        perioddata=[]
+        for hours in range(1,7):
+            columnumber=f"Hour {hours}"
+            shorthand=str(row.get(columnumber, "*")).strip().upper()
+
+            perioddata.append({
+                "slot": columnumber,
+                "status": keymap.get(shorthand, "notmarked")
+            })
+
+        parseddates[date]=perioddata
+    return parseddates
 
 class TimeTableModel(BaseModel):
     monday: List[str]=Field(description="Ordered list of subject slugs for Monday periods")
@@ -259,6 +292,7 @@ def calenderparser(studentid: str, calenderpath: str, targetterm: str) -> dict:
     }
 
     savedates(studentid, calenderdict)
+    return semstart
 
 
 
