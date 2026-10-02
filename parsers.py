@@ -142,6 +142,8 @@ def timetableparser(studentid: str, imagepath: str):
     edittimetable(timetable,subjects)
     savetimetable(studentid,timetable)
 
+
+
 class HolidayModel(BaseModel):
     date:str=Field(description="Holiday date in YYYY-MM-DD format")
     reason:str=Field(description="Name or cause of the holiday (e.g., Karkidaka Vavu, Independence Day, Gandhi Jayanthi)")
@@ -212,19 +214,23 @@ def calenderparser(studentid: str, calenderpath: str, targetterm: str) -> dict:
         print(f"End       : {semend}")
 
     prompt=f"""
-        Analyze the extracted calendar table rows from KTU B.Tech academic calendar.
-        Semester runs from {semstart} to {semend}.
+    Analyze the extracted calendar table rows from KTU B.Tech academic calendar.
+    Semester runs from {semstart} to {semend}.
 
-        Extract all festival holidays, public holidays, and days marked with non-working events occurring strictly between {semstart} and {semend}.
-        For each holiday, extract:
-        1. "date": Formatted strictly as YYYY-MM-DD.
-        2. "reason": The exact holiday title or event description found in the row (e.g., "Karkidaka Vavu", "Independence Day", "Gandhi Jayanthi").
+    Extract all festival holidays, public holidays, and days marked with non-working events occurring strictly between {semstart} and {semend}.
+    For each holiday, extract:
+    1. "date": Formatted strictly as YYYY-MM-DD.
+    2. "reason": The holiday title or event description written in English or Manglish (Latin script).
+       - TRANSLITERATION RULE: If an event description or festival name is written in Malayalam script (or contains broken Malayalam font characters like "(cid:1559)"), translate/transliterate it directly into natural Manglish / English Latin text.
+       - Examples:
+         * "തിരുവോണം" -> "Thiruvonam"
+         * "ദീപാവലി" -> "Deepavali"
 
-        Do not include regular Sundays unless they have a named festival or holiday title.
+    Do not include regular Sundays unless they have a named festival or holiday title.
 
-        CALENDAR ROWS:
-        {chr(10).join(extractedtext)}
-        """
+    CALENDAR ROWS:
+    {chr(10).join(extractedtext)}
+    """
             
     client=genai.Client()
     response=client.models.generate_content(
