@@ -13,9 +13,9 @@ def subjectreport(attendence: dict, calender: dict, today: date):
             "subjectname": str(data.get("subjectname",subject))
         }
 
-    for date,day, in calender.items():
-        date=date.fromisoformat(date)
-        if date<today and day.get("status")=="working":
+    for datestr,day, in calender.items():
+        currentdate=date.fromisoformat(datestr)
+        if currentdate<today and day.get("status")=="working":
             for period in day.get("periods", []):
                 subject=period.get("subject")
                 attendence=period.get("attendence")
@@ -85,13 +85,13 @@ def calculateattendence(studentid: str):
 
 def simulatebunk(studentid: str, targetdate: str):
     _,studentdetails=getstudentdata(studentid)
-    if not studentdetails.exists():
+    if not studentdetails.exists:
         print("Student details not Found!")
         return
 
     data=studentdetails.to_dict()
-    attendence=data.get("attendence",{})
-    calendar=data.get("studentcalender",{})
+    attendence=data.get("subjects",{})
+    calendar=data.get("studentcalendar",{})
     today=date.today()
 
     if targetdate not in calendar:
@@ -106,7 +106,7 @@ def simulatebunk(studentid: str, targetdate: str):
     periods=currentday.get("periods",[])
     currentattendence=subjectreport(attendence,calendar,today)
 
-    periodonday=Dict[str, int]={}
+    periodonday: Dict[str, int]={}
     for period in periods:
         subject=period.get("subject")
         if subject and subject != "free":
@@ -127,5 +127,5 @@ def simulatebunk(studentid: str, targetdate: str):
             print(f"• {subjectname} : {beforebunk:.2f}% -> {afterbunk:.2f}% ({difference:+.2f}%) [Miss {hours} hr]{warning}")
 
 if __name__=="__main__":
-    calculateattendence("P012CSOM23")
-    #simulatebunk("P012CSOM23", "2026-10-05")
+    #calculateattendence("P012CSOM23")
+    simulatebunk("P012CSOM23", "2026-10-05")
