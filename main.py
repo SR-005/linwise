@@ -1,12 +1,13 @@
 import httpx
-from bs4 import BeautifulSoup
 
 import json
 import pandas as pd
+from datetime import date
+
 
 from firebase import saveattendence, getattendence
 from computations import attendencedetails
-from parsers import attendenceparser, timetableparser, calenderparser, buildcalendar, editcalendar
+from parsers import attendenceparser, periodattendenceparser, timetableparser, calenderparser, buildcalendar, editcalendar
 
 BASEURL="https://aisat.linways.com"
 LOGINURL=f"{BASEURL}/student/index.php?next=%2Fstudent%2Fstudent.php%3Fmenu%3Dhome"
@@ -65,10 +66,37 @@ def attendence(session, username: str):
 def timetable(username: str):
     timetabledict=timetableparser(username,r"media\timetable.jpeg")
 
-def calendar(username: str):
-    calenderparser(username,"calenderpath","targetterm")
-    buildcalendar(username)
-    editcalendar(username)
+def calendar(session, username: str):
+    #semstart=calenderparser(username, r"media\calender.pdf", "B. Tech S3/S5/S7")
+
+    semstart="2026-07-01"
+    today=date.today()
+    today=today.strftime("%Y/%m/%d")
+    semid="7"
+
+    baseurl="https://aisat.linways.com/student/attendance/ajax_attendance_display.php"
+
+    params={    
+        "fromday": semstart,
+        "today": today,
+        "semID": semid
+    }
+    
+    headers={
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": "https://aisat.linways.com/student/attendance/between_two_dates.php",  # Keeps Linways CSRF/referer checks happy
+        "X-Requested-With": "XMLHttpRequest"
+    }
+
+    response=session.get(baseurl, params=params, headers=headers)
+    response.raise_for_status()
+
+    history=periodattendenceparser(response.text)
+    print(f"History: {history}")
+    print(f"Length: {len(history)}")
+
+    #buildcalendar(username)
+    #editcalendar(username)
 
 def main():
     session=linwayslogin(username,password)
@@ -77,7 +105,7 @@ def main():
 
         #attendence(session, username)
         #timetable(username)
-        #calendar(username)
+        calendar(session, username)
 
     else:
         print("Session is not active. Something Happend :(")
