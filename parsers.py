@@ -268,7 +268,7 @@ def buildcalendar(studentid: str):
 
     semstart=calendar.get("semesterstart")
     semend=calendar.get("semesterend")
-    ktuholidays=set(calendar.get("holidays",[]))
+    ktuholidays={item["date"]: item["reason"] for item in calendar.get("holidays", [])}
 
     if not semstart or not semend:
         raise ValueError("Missing Semester Start/End Values")
@@ -297,7 +297,7 @@ def buildcalendar(studentid: str):
                     "day": dayname,
                     "status": "holiday",
                     "periods": [],
-                    "reason": "Ktu Declared Holiday"
+                    "reason": ktuholidays[formatteddate]
                 }
 
         else:
@@ -378,5 +378,5 @@ def editcalendar(studentid: str):
 
 if __name__=="__main__":
     #timetableparser("P012CSOM23",r"media\timetable.jpeg")
-    calenderparser("P012CSOM23", r"media\calender.pdf", "B. Tech S3/S5/S7")
-    #editcalendar("P012CSOM23")
+    #calenderparser("P012CSOM23", r"media\calender.pdf", "B. Tech S3/S5/S7")
+    buildcalendar("P012CSOM23")
