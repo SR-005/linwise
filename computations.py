@@ -4,42 +4,7 @@ from datetime import date, timedelta
 import math
 from firebase import getstudentdata
 
-def calculator(subjectdata: Dict[str, Any], targetpercentage: float=75.0) -> Dict[str, Any]:
-    attended=int(subjectdata.get("attended",0))
-    conducted=int(subjectdata.get("conducted",0))
-    subjectname=subjectdata.get("subjectname", "Unknown Subject")
-
-    if conducted == 0:
-        return {
-            "name": subjectname,
-            "percentage": 0.0,
-            "status": "safe", 
-            "safebunks": 0,
-            "classneeded": 0
-        }
-
-    currentpercentage=round((attended/conducted)*100,2)
-    if currentpercentage>=targetpercentage:             #i.e, you have more than target percentage
-        safebunks=max(0, math.floor((100.0 * attended - targetpercentage * conducted) / targetpercentage))
-        return {
-            "name": subjectname,
-            "percentage": currentpercentage,
-            "status": "safe",
-            "safebunks": safebunks,
-            "classneeded": 0,
-        }
-    else:
-        needed=math.ceil((targetpercentage * conducted -100.0 * attended) / (100.0 - targetpercentage))
-        return {
-            "name": subjectname,
-            "percentage": currentpercentage,
-            "status": "shortage",
-            "safebunks": 0,
-            "classneeded": max(1,needed)
-        }
-
-
-def recalculatecurrent(attendence: dict, calender: dict, today: date):
+def subjectreport(attendence: dict, calender: dict, today: date):
     effectiveattendence={}
     for subject,data in attendence.items():
         effectiveattendence[subject]={
@@ -64,6 +29,53 @@ def recalculatecurrent(attendence: dict, calender: dict, today: date):
 
     return effectiveattendence
 
-def attendencedetails(subjectdict: Dict[str, Dict[str, Any]], targetpercentage: float=75.0) -> Dict[str, Any]:
-    details=[calculator(subject, targetpercentage) for subject in subjectdict.values()]
-    return details
+def remaininghours(calendar: dict, fromdate: date) -> Dict[str, int]:
+    remaining: Dict[str, int]={}
+
+    for dte,day in calendar.items():
+        date=date.fromisoformat(date)
+        if date>=fromdate and day.get("status")=="working":
+            for period in day.get("periods",[]):
+                subject=period.get("subject")
+                if subject and subject!="free":
+                    remaining[subject]=remaining.get(subject, 0)+1
+
+def calculateattendence(studentid: str):
+    _,studentdetails=getstudentdata(studentid)
+    if not studentdetails.exists():
+        print("Student details not Found!")
+        return
+
+    data=studentdetails.to_dict()
+    attendence=data.get("attendence",{})
+    calendar=data.get("studentcalender",{})
+
+    today=date.today()
+    tomorrow=today+timedelta(days=1)
+
+    currentattendence=subjectreport(attendence,calendar,today)
+    remaining=remaininghours(calendar,tomorrow)
+
+    for subject,data in currentattendence.items():
+        attended=data["attended"]
+        conducted=data["conducted"]
+        currentpercentage=(attended/conducted*100) if conducted>0 else 0.0
+
+        hoursleft=remaininghours.get(subject,0)
+        totalhours=conducted+hoursleft
+        if totalhours==0:
+            continue
+
+        minrequired=math.ceil(0.75*totalhours)
+        maxpossibleattended=attended+hoursleft
+        bunksleft=maxpossibleattended-minrequired
+
+        if bunksleft>=0:
+            bunkdisplay=f"{bunksleft} hours"
+        else:
+            bunkdisplay=f"DEFICIT ({abs(bunksleft)})"
+
+        subjectname=data["subjectname"][:28]
+        print(f"{subjectname:<30} | {currentpercentage:>6.2f}% | {hoursleft:>5} | {totalhours:>9} | {bunksleft:<12}")
+
+    
