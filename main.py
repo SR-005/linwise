@@ -92,10 +92,8 @@ def calendar(session, username: str):
     response.raise_for_status()
 
     history=periodattendenceparser(response.text)
-    print(f"History: {history}")
-    print(f"Length: {len(history)}")
 
-    #buildcalendar(username)
+    buildcalendar(username, history)
     #editcalendar(username)
 
 def main():
