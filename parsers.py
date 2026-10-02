@@ -41,39 +41,7 @@ def attendenceparser(studentid: str, response: str):
 
     saveattendence(studentid,df)
 
-def periodattendenceparser(htmlcontent: str) -> Dict[str, List[dict]]:
-    tables=pd.read_html(io.StringIO(htmlcontent))
-    if not tables:
-        return {}
 
-    df=tables[0]
-    df.columns=[str(col).strip() for col in df.columns]
-
-    keymap={
-        "P": "present",
-        "A": "absent",
-        "DL": "present",
-        "*": "notmarked"
-    }
-    parseddates={}
-
-    for _,row in df.iterrows():
-        date=str(row.get("Dates", "")).strip()
-        if not date or date.lower()=="nan":
-            continue
-
-        perioddata=[]
-        for hours in range(1,7):
-            columnumber=f"Hour {hours}"
-            shorthand=str(row.get(columnumber, "*")).strip().upper()
-
-            perioddata.append({
-                "slot": columnumber,
-                "status": keymap.get(shorthand, "notmarked")
-            })
-
-        parseddates[date]=perioddata
-    return parseddates
 
 class TimeTableModel(BaseModel):
     monday: List[str]=Field(description="Ordered list of subject slugs for Monday periods")
@@ -295,8 +263,42 @@ def calenderparser(studentid: str, calenderpath: str, targetterm: str) -> dict:
     return semstart
 
 
+def periodattendenceparser(htmlcontent: str) -> Dict[str, List[dict]]:
+    tables=pd.read_html(io.StringIO(htmlcontent))
+    if not tables:
+        return {}
 
-def buildcalendar(studentid: str):
+    df=tables[0]
+    df.columns=[str(col).strip() for col in df.columns]
+
+    keymap={
+        "P": "present",
+        "A": "absent",
+        "DL": "present",
+        "BLOCKED": "absent",
+        "*": "notmarked"
+    }
+    parseddates={}
+
+    for _,row in df.iterrows():
+        date=str(row.get("Dates", "")).strip()
+        if not date or date.lower()=="nan":
+            continue
+
+        perioddata=[]
+        for hours in range(1,7):
+            columnumber=f"Hour {hours}"
+            shorthand=str(row.get(columnumber, "*")).strip().upper()
+
+            perioddata.append({
+                "slot": columnumber,
+                "status": keymap.get(shorthand, "notmarked")
+            })
+
+        parseddates[date]=perioddata
+    return parseddates
+
+def buildcalendar(studentid: str, attendencehistory: Dict[str, List[dict]]):
     studentobj,studentdetails=getstudentdata(studentid)
     
     if not studentdetails.exists:
@@ -313,6 +315,7 @@ def buildcalendar(studentid: str):
     if not semstart or not semend:
         raise ValueError("Missing Semester Start/End Values")
 
+    today=date.today()
     semstart=date.fromisoformat(semstart)
     semend=date.fromisoformat(semend)
     weekdays=["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
@@ -342,10 +345,35 @@ def buildcalendar(studentid: str):
 
         else:
             periods=timetable.get(dayname,[])
+            structedperiods=[]
+            slots={}
+
+            if formatteddate in attendencehistory:
+                for period in attendencehistory[formatteddate]:
+                    try:
+                        index=int(str(period["slot"]).replace("Hour", "").strip())
+                        slots[index]=period.get("status", "notmarked")
+                    except (ValueError, KeyError):
+                        continue
+
+            for index, period in enumerate(periods, start=1):
+                if not period or period=="free":
+                    attendencestatus="free"
+                elif currentdate<today:
+                    attendencestatus=slots.get(index,"notmarked")
+                else:
+                    attendencestatus="pending"
+
+                structedperiods.append({
+                    "slot": index,
+                    "subject": period if period else "free",
+                    "attendance": attendencestatus
+                })
+
             fullcalender[formatteddate]={
                     "day": dayname,
                     "status": "working",
-                    "periods": periods,
+                    "periods": structedperiods,
                     "reason": ""
                 }    
 
