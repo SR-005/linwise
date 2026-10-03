@@ -359,15 +359,19 @@ def buildcalendar(studentid: str, attendencehistory: Dict[str, List[dict]]):
             for index, period in enumerate(periods, start=1):
                 if not period or period=="free":
                     attendencestatus="free"
+                    source="free"
                 elif currentdate<today:
                     attendencestatus=slots.get(index,"notmarked")
+                    source="linways"
                 else:
                     attendencestatus="pending"
+                    source="linways"
 
                 structedperiods.append({
                     "slot": index,
                     "subject": period if period else "free",
-                    "attendance": attendencestatus
+                    "attendance": attendencestatus,
+                    "source": source
                 })
 
             fullcalender[formatteddate]={
