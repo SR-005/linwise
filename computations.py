@@ -25,7 +25,7 @@ def unmarkedperiods(calender: dict, today: date) -> Dict[str, List[dict]]:
 
 def markunmarked(studentid: str) -> bool:
     studentobj,studentdetails=getstudentdata(studentid)
-    if studentdetails.exists:
+    if not studentdetails.exists:
         print("Student Record not Found!")
         return False
 
@@ -42,13 +42,13 @@ def markunmarked(studentid: str) -> bool:
     print(f"Detected {len(unmarked)} days found with {totalunmarked} number of periods")
 
     updates={}
-    for date, pending in unmarked.items():
-        day=calendar[date]
+    for datestr, pending in unmarked.items():
+        day=calendar[datestr]
         dayname=day.get("day","").upper()
         periods=day.get("periods",[])
 
         print(f"==================================================")
-        print(f" Date: {date} ({day})")
+        print(f" Date: {datestr} ({day})")
         print(f" Pending Hours: {len(pending)}")
 
         for period in pending:
@@ -64,14 +64,16 @@ def markunmarked(studentid: str) -> bool:
             for period in periods:
                 if period.get("subject")!="free" and period.get("attendance")=="notmarked":
                     period["attendance"]="present"
-            updates[f"studentcalendar.{date}.periods"]=periods
+                    period["source"]="useroverride"
+            updates[f"studentcalendar.{datestr}.periods"]=periods
             print("Attendence Updated as Present")
 
         elif choice=="2":
             for period in periods:
                 if period.get("subject")!="free" and period.get("attendance")=="notmarked":
                     period["attendance"]="absent"
-            updates[f"studentcalendar.{date}.periods"]=periods
+                    period["source"]="useroverride"
+            updates[f"studentcalendar.{datestr}.periods"]=periods
             print("Attendence Updated as Absent")
 
         elif choice=="3":
@@ -82,13 +84,15 @@ def markunmarked(studentid: str) -> bool:
                 if period.get("subject")!="free" and period.get("attendance")=="notmarked":
                     if period.get("slot") in bunkedperiod:
                         period["attendance"]="absent"
+                        period["source"]="useroverride"
                     else:
                         period["attendance"]="present"
-            updates[f"studentcalendar.{date}.periods"]=periods
+                        period["source"]="useroverride"
+            updates[f"studentcalendar.{datestr}.periods"]=periods
             print("Attendence Updated")
 
         else:
-            print(f"[*] Skipped {date}.")
+            print(f"[*] Skipped {datestr}.")
             continue
         
     if updates:
@@ -136,6 +140,9 @@ def remaininghours(calendar: dict, fromdate: date) -> Dict[str, int]:
     return remaining
 
 def calculateattendence(studentid: str):
+    #markunmarked(studentid)
+    #print("All attendence is Marked as Either absent or Present")
+
     _,studentdetails=getstudentdata(studentid)
     if not studentdetails.exists:
         print("Student details not Found!")
@@ -178,7 +185,6 @@ def calculateattendence(studentid: str):
 
 def simulatebunk(studentid: str, targetdate: str):
     _,studentdetails=getstudentdata(studentid)
-    
     if not studentdetails.exists:
         print("Student details not Found!")
         return
@@ -221,5 +227,5 @@ def simulatebunk(studentid: str, targetdate: str):
             print(f"• {subjectname} : {beforebunk:.2f}% -> {afterbunk:.2f}% ({difference:+.2f}%) [Miss {hours} hr]{warning}")
 
 if __name__=="__main__":
-    #calculateattendence("P012CSOM23")
-    simulatebunk("P012CSOM23", "2026-10-05")
+    calculateattendence("P012CSOM23")
+    #simulatebunk("P012CSOM23", "2026-10-05")
