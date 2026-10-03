@@ -146,7 +146,79 @@ def unmarkedperiods(calender: dict, today: date) -> Dict[str, List[dict]]:
                 unmarked[datestr]=pendingperiods
     return unmarked
 
+def markunmarked(studentid: str) -> bool:
+    studentobj,studentdetails=getstudentdata(studentid)
+    if studentdetails.exists:
+        print("Student Record not Found!")
+        return False
 
+    studentdetails=studentdetails.to_dict()
+    calendar=studentdetails.get("studentcalendar") or {}
+
+    today=date.today()
+    unmarked=unmarkedperiods(calendar, today)
+
+    if not unmarked:
+        print("All period Attendence are marked till date!")
+
+    totalunmarked=sum(len(period) for period in unmarked.values())
+    print(f"Detected {len(unmarked)} days found with {totalunmarked} number of periods")
+
+    updates={}
+    for date, pending in unmarked.items():
+        day=calendar[date]
+        dayname=day.get("day","").upper()
+        periods=day.get("periods",[])
+
+        print(f"==================================================")
+        print(f" Date: {date} ({day})")
+        print(f" Pending Hours: {len(pending)}")
+
+        for period in pending:
+            print(f"   • Period {period['slot']}: {period['subject']}")
+
+        print(" [1] Present for ALL pending hours")
+        print(" [2] Absent for ALL pending hours")
+        print(" [3] Custom (Mark specific slots)")
+        print(" [4] Skip this date for now")
+        choice=input("Select an option [1/2/3/4]: ").strip().lower()
+
+        if choice=="1":
+            for period in periods:
+                if period.get("subject")!="free" and period.get("attendance")=="notmarked":
+                    period["attendance"]="present"
+            updates[f"studentcalendar.{date}.periods"]=periods
+            print("Attendence Updated as Present")
+
+        elif choice=="2":
+            for period in periods:
+                if period.get("subject")!="free" and period.get("attendance")=="notmarked":
+                    period["attendance"]="absent"
+            updates[f"studentcalendar.{date}.periods"]=periods
+            print("Attendence Updated as Absent")
+
+        elif choice=="3":
+            bunkinput=input("Enter the Period Number of the Periods you bunked (e.g. 2, 4): ").strip()
+            bunkedperiod={int(input.strip()) for input in bunkinput.split(",") if input.strip().isdigit()}
+
+            for period in periods:
+                if period.get("subject")!="free" and period.get("attendance")=="notmarked":
+                    if period.get("slot") in bunkedperiod:
+                        period["attendance"]="absent"
+                    else:
+                        period["attendance"]="present"
+            updates[f"studentcalendar.{date}.periods"]=periods
+            print("Attendence Updated")
+
+        else:
+            print(f"[*] Skipped {date}.")
+            continue
+        
+    if updates:
+        studentobj.update(updates)
+        print(f"\n[+] Successfully reconciled and saved {len(updates)} day(s) to Firestore!")
+        return True
+    return False
 
 if __name__=="__main__":
     #calculateattendence("P012CSOM23")
