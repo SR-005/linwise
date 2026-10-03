@@ -4,6 +4,7 @@ from datetime import date, timedelta
 import math
 from firebase import getstudentdata
 
+
 def subjectreport(attendence: dict, calender: dict, today: date):
     effectiveattendence={}
     for subject,data in attendence.items():
@@ -125,6 +126,27 @@ def simulatebunk(studentid: str, targetdate: str):
             warning=" [CRITICAL: Drops below 75%]" if afterbunk<75.0 else ""
             subjectname=currentattendence[subject]["subjectname"][:25]
             print(f"• {subjectname} : {beforebunk:.2f}% -> {afterbunk:.2f}% ({difference:+.2f}%) [Miss {hours} hr]{warning}")
+
+def unmarkedperiods(calender: dict, today: date) -> Dict[str, List[dict]]:
+    unmarked={}
+    sorteddates=sorted(calender.keys())
+
+    for datestr in sorteddates:
+        currentdate=date.fromisoformat(datestr)
+        if currentdate>=today:
+            break
+
+        day=calender[datestr]
+        if day.get("status")=="working":
+            pendingperiods=[
+                period for period in day.get("periods",[])
+                if period.get("subject") and period.get("subject")!="free" and period.get("attendance")=="notmarked"
+            ]
+            if pendingperiods:
+                unmarked[datestr]=pendingperiods
+    return unmarked
+
+
 
 if __name__=="__main__":
     #calculateattendence("P012CSOM23")
