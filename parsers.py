@@ -298,6 +298,70 @@ def periodattendenceparser(htmlcontent: str) -> Dict[str, List[dict]]:
         parseddates[date]=perioddata
     return parseddates
 
+def syncattendence(studentid: str, parsedportalhistory: Dict[str, List[dict]]):
+    studentobj,studentdetails=getstudentdata(studentid)
+    if not studentdetails.exists:
+        raise ValueError(f"Student record '{studentid}' not found.")
+
+    studentdetails=studentdetails.to_dict()
+    calendar=studentdetails.get("calendar",{})
+
+    updatedcount=0
+    preserved=0
+    updates={}
+
+    for datestr, periods in parsedportalhistory.items():
+        if datestr not in calendar:
+            continue
+
+        day=calendar[datestr]
+        if day.get("status")!="working":
+            continue
+
+        updatedperiods=day.get(periods,[])
+        portalperiods={}
+        for period in periods:
+            try:
+                periodindex=int(str(period["slot"]).replace("Hour","").strip())
+                portalperiods[periodindex]=period.get("status","notmarked")
+            except (ValueError, KeyError):
+                continue
+
+        daymodified=False
+        for period in periods:
+            periodindex=period.get("slot")
+            if period.get("subject")=="free":
+                continue
+
+            currentsource=period.get("source","unmarked")
+            portalstatus=portalperiods.get(periodindex, "notmaked")
+
+            if portalstatus in ["present","absent"]:
+                if period.get("attendance")!=portalstatus or period.get("source")!="linways":
+                    period["attendance"]=portalstatus
+                    period["source"]="linways"
+                    daymodified=True
+                    updatedcount+=1
+
+            elif currentsource=="useroverride":
+                preserved+=1
+
+            else:
+                if period.get("attendance")!="notmarked":
+                    period["attendance"]="notmarked"
+                    period["source"]="unmarked"
+                    daymodified=True
+
+        if daymodified:
+            updates[f"calendar.{datestr}.periods"]=periods
+
+    if updates:
+        studentobj.update(updates)
+
+    print(f"[+] Smart sync complete: {updatedcount} period(s) updated from portal.")
+    if preserved > 0:
+        print(f"[*] Preserved {preserved} user override(s) awaiting faculty posting.")
+
 def buildcalendar(studentid: str, attendencehistory: Dict[str, List[dict]]):
     studentobj,studentdetails=getstudentdata(studentid)
     
