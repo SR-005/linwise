@@ -298,7 +298,7 @@ def periodattendenceparser(htmlcontent: str) -> Dict[str, List[dict]]:
         parseddates[date]=perioddata
     return parseddates
 
-def syncattendence(studentid: str, parsedportalhistory: Dict[str, List[dict]]):
+def updateattendence(studentid: str, parsedportalhistory: Dict[str, List[dict]]):
     studentobj,studentdetails=getstudentdata(studentid)
     if not studentdetails.exists:
         raise ValueError(f"Student record '{studentid}' not found.")
@@ -318,23 +318,23 @@ def syncattendence(studentid: str, parsedportalhistory: Dict[str, List[dict]]):
         if day.get("status")!="working":
             continue
 
-        updatedperiods=day.get(periods,[])
-        portalperiods={}
+        storedperiods=day.get(periods,[])
+        newdperiods={}
         for period in periods:
             try:
                 periodindex=int(str(period["slot"]).replace("Hour","").strip())
-                portalperiods[periodindex]=period.get("status","notmarked")
+                newdperiods[periodindex]=period.get("status","notmarked")
             except (ValueError, KeyError):
                 continue
 
         daymodified=False
-        for period in periods:
+        for period in storedperiods:
             periodindex=period.get("slot")
             if period.get("subject")=="free":
                 continue
 
             currentsource=period.get("source","unmarked")
-            portalstatus=portalperiods.get(periodindex, "notmaked")
+            portalstatus=newdperiods.get(periodindex, "notmaked")
 
             if portalstatus in ["present","absent"]:
                 if period.get("attendance")!=portalstatus or period.get("source")!="linways":
@@ -448,7 +448,7 @@ def buildcalendar(studentid: str, attendencehistory: Dict[str, List[dict]]):
         currentdate=currentdate+timedelta(days=1)
 
     studentobj.set({"studentcalendar": fullcalender}, merge=True)
-    print("Calender Built and Saves to Firestore")
+    print("Calender Built and Saved to Firestore")
 
 def editcalendar(studentid: str):
     studentobj,studentdetails=getstudentdata(studentid)
