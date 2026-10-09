@@ -2,7 +2,14 @@ import math
 from typing import Dict, Any, List
 from datetime import date, timedelta
 import math
+import re
 from firebase import getstudentdata
+
+def normalizesubjectnames(name:str) -> str:
+    if not name:
+        return
+    cleaned=re.sub(r"[^a-zA-Z0-9]", "_", name.lower())
+    return re.sub(r"_+", "_", cleaned).strip("_")
 
 def unmarkedperiods(calender: dict, today: date) -> Dict[str, List[dict]]:
     unmarked={}
@@ -103,44 +110,78 @@ def markunmarked(studentid: str) -> bool:
 
 def subjectreport(attendence: dict, calender: dict, today: date):
     effectiveattendence={}
+    namelookup={}
+
     for subject,data in attendence.items():
-        effectiveattendence[subject]={
+        normalizedname=normalizesubjectnames(subject)
+        effectiveattendence[normalizedname]={
             "attended": int(data.get("attended",0)) ,
             "conducted": int(data.get("conducted",0)),
-            "subjectname": str(data.get("subjectname",subject))
+            "subjectname": str(data.get("subjectname",subject)),
+            "rawname": subject
         }
+        namelookup[normalizedname]=normalizedname
+        if "subjectname" in data:
+            namelookup[normalizesubjectnames(data["subjectname"])]=normalizedname
 
     for datestr,day, in calender.items():
         currentdate=date.fromisoformat(datestr)
         if currentdate<today and day.get("status")=="working":
             for period in day.get("periods", []):
-                subject=period.get("subject")
-                attendence=period.get("attendence")
+                subject=period.get("subject","")
+                if not subject or subject=="free":
+                    continue
 
-                if subject in effectiveattendence and subject!="free":
+                subjectname=normalizesubjectnames(subject)
+                subjectkey=namelookup.get(subjectname)
+
+                if not subjectkey:
+                    for key in effectiveattendence.keys():
+                        if key in subjectname or subjectname in key:
+                            subjectkey=key
+                            break
+            
+                if not subjectkey:
+                    continue
+
+                attendence=period.get("attendance")
+                source=period.get("source")
+
+                if source=="useroverride":
                     if attendence=="present":
-                        effectiveattendence[subject]["attended"]+=1
-                        effectiveattendence[subject]["conducted"]+=1
+                        effectiveattendence[subjectkey]["attended"]+=1
+                        effectiveattendence[subjectkey]["conducted"]+=1
                     elif attendence=="absent":
-                        effectiveattendence[subject]["conducted"]+=1
+                        effectiveattendence[subjectkey]["conducted"]+=1
 
     return effectiveattendence
 
-def remaininghours(calendar: dict, fromdate: date) -> Dict[str, int]:
+def remaininghours(calendar: dict, fromdate: date, subjectkeylist: List) -> Dict[str, int]:
     remaining: Dict[str, int]={}
 
-    for date,day in calendar.items():
-        date=date.fromisoformat(date)
-        if date>=fromdate and day.get("status")=="working":
+    for datestr,day in calendar.items():
+        formatteddate=date.fromisoformat(datestr)
+        if formatteddate>=fromdate and day.get("status")=="working":
             for period in day.get("periods",[]):
                 subject=period.get("subject")
-                if subject and subject!="free":
-                    remaining[subject]=remaining.get(subject, 0)+1
+                if subject and subject=="free":
+                    continue
+
+                subjectname=normalizesubjectnames(subject)
+                subjectkey=None
+
+                for key in subjectkeylist:
+                    if key==subjectname or key in subjectname or subjectname in key:
+                        subjectkey=key
+                        break
+
+                if subjectkey:
+                    remaining[subjectkey]=remaining.get(subjectkey, 0)+1
 
     return remaining
 
 def calculateattendence(studentid: str):
-    #markunmarked(studentid)
+    markunmarked(studentid)
     #print("All attendence is Marked as Either absent or Present")
 
     _,studentdetails=getstudentdata(studentid)
@@ -149,13 +190,13 @@ def calculateattendence(studentid: str):
         return
     data=studentdetails.to_dict()
     attendence=data.get("subjects",{})
-    calendar=data.get("studentcalender",{})
+    calendar=data.get("studentcalendar",{})
   
     today=date.today()
     tomorrow=today+timedelta(days=1)
 
     currentattendence=subjectreport(attendence,calendar,today)
-    remaining=remaininghours(calendar,tomorrow)
+    remaining=remaininghours(calendar,tomorrow, list(currentattendence.keys()))
 
     print("\n" + "=" * 88)
     print(f"{'SUBJECT':<30} | {'CURR %':<8} | {'LEFT':<5} | {'PROJ TOT':<9} | {'MAX BUNKS':<12}")
