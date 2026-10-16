@@ -298,6 +298,7 @@ def periodattendenceparser(htmlcontent: str) -> Dict[str, List[dict]]:
         parseddates[date]=perioddata
     return parseddates
 
+#when unmarked attendence has been updated via 'useroverride' and the original attendence is marked in the next iteration, it will update the 'useroverrides' 
 def updateattendence(studentid: str, parsedportalhistory: Dict[str, List[dict]]):
     studentobj,studentdetails=getstudentdata(studentid)
     if not studentdetails.exists:
@@ -361,6 +362,94 @@ def updateattendence(studentid: str, parsedportalhistory: Dict[str, List[dict]])
     print(f"[+] Smart sync complete: {updatedcount} period(s) updated from portal.")
     if preserved > 0:
         print(f"[*] Preserved {preserved} user override(s) awaiting faculty posting.")
+
+def editoverrides(studentid: str):
+    studentobj,studentdetails=getstudentdata(studentid)
+        
+    if not studentdetails.exists:
+        raise ValueError("No valid Student Record Found!")
+
+    studentdetails=studentdetails.to_dict()
+    calendar=studentdetails.get("academicdates", {})
+
+    overriddendates={}
+    for datestr in sorted(calendar.keys()):
+        day=calendar[datestr]
+        if day.get("status")=="working":
+            slots=[
+                period for period in day.get("periods",[])
+                if period.get("source")=="useroverride"
+            ]
+            if slots:
+                overriddendates[datestr]=slots
+
+    if not overriddendates:
+        print("No user overriden dates found in calendar")
+        return
+
+    print("\n" + "=" * 65)
+    print("                   ACTIVE USER OVERRIDES")
+    print("=" * 65)
+    datelist=list(overriddendates.keys())
+    for index, datestr in enumerate(datelist,1):
+        day=calendar[datestr].get("day","").upper()
+        slotinformation=", ".join([
+                f"P{p['slot']} ({p['subject'][:10]}): {p['attendance'].upper()}"
+                for p in overriddendates[datestr]
+            ])
+        print(f" [{index}] {datestr} ({day}) -> {slotinformation}")
+    print("=" * 65)
+
+    choice=input("\nEnter date index to edit (or 'q' to quit): ").strip()
+    if choice.lower()=='q' or not choice.isdigit():
+        return
+
+    selectedindex=int(choice)-1
+    if not (0<=selectedindex<len(datelist)):
+        print("[-] Invalid index selection.")
+        return
+
+    targetdate=datelist[selectedindex]
+    daydata=calendar[targetdate]
+    periods=daydata.get("periods", [])
+
+    print(f"\n--- Periods on {targetdate} ({daydata.get('day').upper()}) ---")
+    for period in periods:
+        sourcelabel=f"[{period.get('source', 'portal')}]"
+        print(f"  Slot {period['slot']}: {period['subject']:<25} | Status: {period['attendance']:<10} {sourcelabel}")
+
+    slotinput=input("\nEnter slot number to modify (1-6): ").strip()
+    if not slotinput.isdigit():
+        return
+
+    slotnum=int(slotinput)
+    targetslot=next((p for p in periods if p["slot"] == slotnum), None)
+    if not targetslot or targetslot.get("subject") == "free":
+        print("[-] Invalid slot number or free period.")
+        return
+
+    print("\nSelect new state:")
+    print(" [1] Present")
+    print(" [2] Absent")
+    print(" [3] Reset to 'notmarked' (await portal update)")
+    opt = input("Choice (1-3): ").strip()
+
+    if opt=="1":
+        targetslot["attendance"] = "present"
+        targetslot["source"] = "useroverride"
+    elif opt=="2":
+        targetslot["attendance"] = "absent"
+        targetslot["source"] = "useroverride"
+    elif opt=="3":
+        targetslot["attendance"] = "notmarked"
+        targetslot["source"] = "unmarked"
+    else:
+        print("[-] No changes applied.")
+        return
+
+    # Update only this date's periods in Firestore
+    studentobj.update({f"{"studentcalendar"}.{targetdate}.periods": periods})
+    print(f"[+] Slot {slotnum} on {targetdate} updated to '{targetslot['attendance']}' in Firestore.")
 
 def buildcalendar(studentid: str, attendencehistory: Dict[str, List[dict]]):
     studentobj,studentdetails=getstudentdata(studentid)
