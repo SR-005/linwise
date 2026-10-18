@@ -224,7 +224,7 @@ def calculateattendence(studentid: str):
         subjectname=data["subjectname"][:28]
         print(f"{subjectname:<30} | {currentpercentage:>6.2f}% | {hoursleft:>5} | {totalhours:>9} | {bunkdisplay:<12}")
 
-def simulatebunk(studentid: str, targetdate: str):
+def simulatebunk(studentid: str, targetdate: str, slots: List[int]=None):
     _,studentdetails=getstudentdata(studentid)
     if not studentdetails.exists:
         print("Student details not Found!")
@@ -247,11 +247,41 @@ def simulatebunk(studentid: str, targetdate: str):
     periods=currentday.get("periods",[])
     currentattendence=subjectreport(attendence,calendar,today)
 
+    simulatedslots=set(slots) if slots else None
+
     periodonday: Dict[str, int]={}
+    misseddetails=[]
+
     for period in periods:
+        slotnumber=period.get("slot")
         subject=period.get("subject")
-        if subject and subject != "free":
-            periodonday[subject]=periodonday.get(subject, 0) + 1
+        if not subject or subject=="free":
+            continue
+
+        if simulatedslots is None or slotnumber in simulatedslots:
+            normalizedsubject=normalizesubjectnames(subject)
+            matchedkey=None
+            for key in currentattendence.keys():
+                if key==normalizedsubject or key in normalizedsubject or normalizedsubject in key:
+                    matchedkey=key
+                    break
+
+            if matchedkey:
+                periodonday[matchedkey]=periodonday.get(matchedkey, 0) + 1
+                misseddetails.append((slotnumber, currentattendence[matchedkey]["subjectname"]))
+
+    if not periodonday:
+        print(f"No actionable subject hours found to simulate on {targetdate}.")
+        return
+
+    scopelabel=f"Slots {sorted(list(simulatedslots))}" if simulatedslots else "FULL DAY"
+    print("\n" + "=" * 80)
+    print(f" BUNK SIMULATION: {targetdate} ({currentday.get('day').upper()}) — {scopelabel}")
+    print("=" * 80)
+
+    for slotnum,subjectname in misseddetails:
+        print(f"  • Hour {slotnum}: {subjectname}")
+    print("-" * 80)    
 
     #bunk simulation
     for subject,hours in periodonday.items():
