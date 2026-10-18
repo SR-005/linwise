@@ -448,7 +448,7 @@ def editoverrides(studentid: str):
         return
 
     # Update only this date's periods in Firestore
-    studentobj.update({f"{"studentcalendar"}.{targetdate}.periods": periods})
+    studentobj.update({f"studentcalendar.{targetdate}.periods": periods})
     print(f"[+] Slot {slotnum} on {targetdate} updated to '{targetslot['attendance']}' in Firestore.")
 
 def buildcalendar(studentid: str, attendencehistory: Dict[str, List[dict]]):
