@@ -5,12 +5,14 @@ import math
 import re
 from firebase import getstudentdata
 
+#for normalizing subject names by stripping unwanted 
 def normalizesubjectnames(name:str) -> str:
     if not name:
         return
     cleaned=re.sub(r"[^a-zA-Z0-9]", "_", name.lower())
     return re.sub(r"_+", "_", cleaned).strip("_")
 
+#creates a list of unmarked dates and return it to 'markunmarked()'
 def unmarkedperiods(calender: dict, today: date) -> Dict[str, List[dict]]:
     unmarked={}
     sorteddates=sorted(calender.keys())
@@ -30,6 +32,7 @@ def unmarkedperiods(calender: dict, today: date) -> Dict[str, List[dict]]:
                 unmarked[datestr]=pendingperiods
     return unmarked
 
+#finds the unmarked dates and marks them (full day or specific periods)
 def markunmarked(studentid: str) -> bool:
     studentobj,studentdetails=getstudentdata(studentid)
     if not studentdetails.exists:
@@ -108,6 +111,7 @@ def markunmarked(studentid: str) -> bool:
         return True
     return False
 
+#calculates the total conducted and attended hours per subject by considering both marked and unmarked periods. returns to 'calculateattendence()'
 def subjectreport(attendence: dict, calender: dict, today: date):
     effectiveattendence={}
     namelookup={}
@@ -156,6 +160,7 @@ def subjectreport(attendence: dict, calender: dict, today: date):
 
     return effectiveattendence
 
+#calculates how many hours will we get for per subject from tomorrow. returns to 'calculateattendence()'
 def remaininghours(calendar: dict, fromdate: date, subjectkeylist: List) -> Dict[str, int]:
     remaining: Dict[str, int]={}
 
@@ -180,6 +185,7 @@ def remaininghours(calendar: dict, fromdate: date, subjectkeylist: List) -> Dict
 
     return remaining
 
+#calculates detailed attendence report like current %, classes left to bunk etc
 def calculateattendence(studentid: str):
     markunmarked(studentid)
     #print("All attendence is Marked as Either absent or Present")
@@ -224,6 +230,7 @@ def calculateattendence(studentid: str):
         subjectname=data["subjectname"][:28]
         print(f"{subjectname:<30} | {currentpercentage:>6.2f}% | {hoursleft:>5} | {totalhours:>9} | {bunkdisplay:<12}")
 
+#simulates bunking a day and its effect on the attendence
 def simulatebunk(studentid: str, targetdate: str, slots: List[int]=None):
     _,studentdetails=getstudentdata(studentid)
     if not studentdetails.exists:
