@@ -58,7 +58,7 @@ def markunmarked(studentid: str) -> bool:
         periods=day.get("periods",[])
 
         print(f"==================================================")
-        print(f" Date: {datestr} ({day})")
+        print(f" Date: {datestr} ({dayname})")
         print(f" Pending Hours: {len(pending)}")
 
         for period in pending:
