@@ -6,7 +6,7 @@ from datetime import date
 
 
 from firebase import saveattendence, getattendence
-#from computations import attendencedetails
+from computations import calculateattendence
 from parsers import attendenceparser, periodattendenceparser, timetableparser, calenderparser, buildcalendar, editcalendar
 
 BASEURL="https://aisat.linways.com"
@@ -58,10 +58,7 @@ def attendence(session, username: str):
     #function which takes the html and parses to tables using pandas
     df=attendenceparser(username,response.text)
 
-    '''attendencereport=getattendence(username)
-    result=attendencedetails(attendencereport, targetpercentage=75.0)
-    for r in result:
-        print(r)'''   
+    
 
 def timetable(username: str):
     timetabledict=timetableparser(username,r"media\timetable.jpeg")
@@ -103,7 +100,8 @@ def main():
 
         #attendence(session, username)
         #timetable(username)
-        calendar(session, username)
+        #calendar(session, username)
+        calculateattendence(username)
 
     else:
         print("Session is not active. Something Happend :(")
