@@ -13,7 +13,7 @@ def normalizesubjectnames(name:str) -> str:
     return re.sub(r"_+", "_", cleaned).strip("_")
 
 #creates a list of unmarked dates and return it to 'markunmarked()'
-def unmarkedperiods(calender: dict, today: date) -> Dict[str, List[dict]]:
+def getunmarked(calender: dict, today: date) -> Dict[str, List[dict]]:
     unmarked={}
     sorteddates=sorted(calender.keys())
 
@@ -32,7 +32,7 @@ def unmarkedperiods(calender: dict, today: date) -> Dict[str, List[dict]]:
                 unmarked[datestr]=pendingperiods
     return unmarked
 
-#finds the unmarked dates and marks them (full day or specific periods)
+#***finds the unmarked dates and marks them (full day or specific periods)
 def markunmarked(studentid: str) -> bool:
     studentobj,studentdetails=getstudentdata(studentid)
     if not studentdetails.exists:
@@ -162,7 +162,7 @@ def subjectreport(attendence: dict, calender: dict, today: date):
 
 #calculates how many hours will we get for per subject from tomorrow. returns to 'calculateattendence()'
 def remaininghours(calendar: dict, fromdate: date, subjectkeylist: List) -> Dict[str, int]:
-    remaining: Dict[str, int]={}
+    remaining={}
 
     for datestr,day in calendar.items():
         formatteddate=date.fromisoformat(datestr)
@@ -187,13 +187,11 @@ def remaininghours(calendar: dict, fromdate: date, subjectkeylist: List) -> Dict
 
 #calculates detailed attendence report like current %, classes left to bunk etc
 def calculateattendence(studentid: str):
-    markunmarked(studentid)
-    #print("All attendence is Marked as Either absent or Present")
-
     _,studentdetails=getstudentdata(studentid)
     if not studentdetails.exists:
         print("Student details not Found!")
         return
+    
     data=studentdetails.to_dict()
     attendence=data.get("subjects",{})
     calendar=data.get("studentcalendar",{})
@@ -208,6 +206,7 @@ def calculateattendence(studentid: str):
     print(f"{'SUBJECT':<30} | {'CURR %':<8} | {'LEFT':<5} | {'PROJ TOT':<9} | {'MAX BUNKS':<12}")
     print("-" * 88)
 
+    report=[]
     for subject,data in currentattendence.items():
         attended=data["attended"]
         conducted=data["conducted"]
@@ -222,13 +221,17 @@ def calculateattendence(studentid: str):
         maxpossibleattended=attended+hoursleft
         bunksleft=maxpossibleattended-minrequired
 
-        if bunksleft>=0:
-            bunkdisplay=f"{bunksleft} hours"
-        else:
-            bunkdisplay=f"DEFICIT ({abs(bunksleft)})"
-
-        subjectname=data["subjectname"][:28]
-        print(f"{subjectname:<30} | {currentpercentage:>6.2f}% | {hoursleft:>5} | {totalhours:>9} | {bunkdisplay:<12}")
+        report.append({
+            "key": subject,
+            "subjectname": data["subjectname"],
+            "attended": attended,
+            "conducted": conducted,
+            "percentage": currentattendence,
+            "left": hoursleft,
+            "totalhours": totalhours,
+            "maxbunks": bunksleft 
+        })
+        return report
 
 #simulates bunking a day and its effect on the attendence
 def simulatebunk(studentid: str, targetdate: str, slots: List[int]=None):
