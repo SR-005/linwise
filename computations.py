@@ -32,84 +32,35 @@ def getunmarked(calender: dict, today: date) -> Dict[str, List[dict]]:
                 unmarked[datestr]=pendingperiods
     return unmarked
 
-#***finds the unmarked dates and marks them (full day or specific periods)
-def markunmarked(studentid: str) -> bool:
-    studentobj,studentdetails=getstudentdata(studentid)
+def getunmarkedsummary(studentid: str,) -> Dict[str, List[dict]]:
+    _,studentdetails=getstudentdata(studentid)
     if not studentdetails.exists:
-        print("Student Record not Found!")
+        return {}
+
+    data=studentdetails.to_dict()
+    calendar=data.get("studentcalendar",{})
+    return getunmarked(calendar, date.today())
+
+def markunmarked(studentid: str, targetdate: str, status: str)-> bool:
+    _,studentdetails=getstudentdata(studentid)
+    if not studentdetails.exists:
+        return {}
+
+    data=studentdetails.to_dict()
+    calendar=data.get("studentcalendar",{})
+
+    if targetdate not in calendar:
         return False
 
-    studentdetails=studentdetails.to_dict()
-    calendar=studentdetails.get("studentcalendar") or {}
+    periodlist=calendar[targetdate].get("periods",[])
+    for period in periodlist:
+        if period.get("subject")!="free" and period.get("attendance")=="notmarked":
+            period["attendance"]=status
+            period["source"]="useroverride"
 
-    today=date.today()
-    unmarked=unmarkedperiods(calendar, today)
-
-    if not unmarked:
-        print("All period Attendence are marked till date!")
-
-    totalunmarked=sum(len(period) for period in unmarked.values())
-    print(f"Detected {len(unmarked)} days found with {totalunmarked} number of periods")
-
-    updates={}
-    for datestr, pending in unmarked.items():
-        day=calendar[datestr]
-        dayname=day.get("day","").upper()
-        periods=day.get("periods",[])
-
-        print(f"==================================================")
-        print(f" Date: {datestr} ({dayname})")
-        print(f" Pending Hours: {len(pending)}")
-
-        for period in pending:
-            print(f"   • Period {period['slot']}: {period['subject']}")
-
-        print(" [1] Present for ALL pending hours")
-        print(" [2] Absent for ALL pending hours")
-        print(" [3] Custom (Mark specific slots)")
-        print(" [4] Skip this date for now")
-        choice=input("Select an option [1/2/3/4]: ").strip().lower()
-
-        if choice=="1":
-            for period in periods:
-                if period.get("subject")!="free" and period.get("attendance")=="notmarked":
-                    period["attendance"]="present"
-                    period["source"]="useroverride"
-            updates[f"studentcalendar.{datestr}.periods"]=periods
-            print("Attendence Updated as Present")
-
-        elif choice=="2":
-            for period in periods:
-                if period.get("subject")!="free" and period.get("attendance")=="notmarked":
-                    period["attendance"]="absent"
-                    period["source"]="useroverride"
-            updates[f"studentcalendar.{datestr}.periods"]=periods
-            print("Attendence Updated as Absent")
-
-        elif choice=="3":
-            bunkinput=input("Enter the Period Number of the Periods you bunked (e.g. 2, 4): ").strip()
-            bunkedperiod={int(input.strip()) for input in bunkinput.split(",") if input.strip().isdigit()}
-
-            for period in periods:
-                if period.get("subject")!="free" and period.get("attendance")=="notmarked":
-                    if period.get("slot") in bunkedperiod:
-                        period["attendance"]="absent"
-                        period["source"]="useroverride"
-                    else:
-                        period["attendance"]="present"
-                        period["source"]="useroverride"
-            updates[f"studentcalendar.{datestr}.periods"]=periods
-            print("Attendence Updated")
-
-        else:
-            print(f"[*] Skipped {datestr}.")
-            continue
-        
-    if updates:
-        studentobj.update(updates)
-        print(f"\n[+] Successfully reconciled and saved {len(updates)} day(s) to Firestore!")
+        studentdetails.update({f"{calendar}.{targetdate}.periods": periodlist})
         return True
-    return False
+
 
 #calculates the total conducted and attended hours per subject by considering both marked and unmarked periods. returns to 'calculateattendence()'
 def subjectreport(attendence: dict, calender: dict, today: date):
@@ -189,8 +140,7 @@ def remaininghours(calendar: dict, fromdate: date, subjectkeylist: List) -> Dict
 def calculateattendence(studentid: str):
     _,studentdetails=getstudentdata(studentid)
     if not studentdetails.exists:
-        print("Student details not Found!")
-        return
+        return {}
     
     data=studentdetails.to_dict()
     attendence=data.get("subjects",{})
