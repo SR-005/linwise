@@ -252,7 +252,7 @@ def simulatebunk(studentid: str, targetdate: str, slots: List[int]=None):
     currentday=calendar[targetdate]
     if currentday.get("status") != "working":
         print(f"[-] {targetdate} is marked as a {currentday.get('status').upper()} ({currentday.get('reason')}). No classes scheduled.")
-        return
+        return []
 
     periods=currentday.get("periods",[])
     currentattendence=subjectreport(attendence,calendar,today)
@@ -280,20 +280,9 @@ def simulatebunk(studentid: str, targetdate: str, slots: List[int]=None):
                 periodonday[matchedkey]=periodonday.get(matchedkey, 0) + 1
                 misseddetails.append((slotnumber, currentattendence[matchedkey]["subjectname"]))
 
-    if not periodonday:
-        print(f"No actionable subject hours found to simulate on {targetdate}.")
-        return
-
-    scopelabel=f"Slots {sorted(list(simulatedslots))}" if simulatedslots else "FULL DAY"
-    print("\n" + "=" * 80)
-    print(f" BUNK SIMULATION: {targetdate} ({currentday.get('day').upper()}) — {scopelabel}")
-    print("=" * 80)
-
-    for slotnum,subjectname in misseddetails:
-        print(f"  • Hour {slotnum}: {subjectname}")
-    print("-" * 80)    
 
     #bunk simulation
+    bunkresult=[]
     for subject,hours in periodonday.items():
         if subject in currentattendence:
             attended=currentattendence[subject]["attended"]
@@ -303,9 +292,15 @@ def simulatebunk(studentid: str, targetdate: str, slots: List[int]=None):
             afterbunk=(attended/(conducted+hours))*100
             difference=afterbunk-beforebunk
 
-            warning=" [CRITICAL: Drops below 75%]" if afterbunk<75.0 else ""
             subjectname=currentattendence[subject]["subjectname"][:25]
-            print(f"• {subjectname} : {beforebunk:.2f}% -> {afterbunk:.2f}% ({difference:+.2f}%) [Miss {hours} hr]{warning}")
+            bunkresult.append({
+                "subject": subjectname,
+                "currentpercentage": beforebunk,
+                "newpercentage": afterbunk,
+                "drop": difference,
+                "cuthours": hours,
+                "below75": afterbunk<75.0,
+            })
 
 if __name__=="__main__":
     calculateattendence("P012CSOM23")
