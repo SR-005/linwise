@@ -42,7 +42,7 @@ def getunmarkedsummary(studentid: str,) -> Dict[str, List[dict]]:
     return getunmarked(calendar, date.today())
 
 def markunmarked(studentid: str, targetdate: str, status: str)-> bool:
-    _,studentdetails=getstudentdata(studentid)
+    studentobj,studentdetails=getstudentdata(studentid)
     if not studentdetails.exists:
         return {}
 
@@ -58,8 +58,8 @@ def markunmarked(studentid: str, targetdate: str, status: str)-> bool:
             period["attendance"]=status
             period["source"]="useroverride"
 
-        studentdetails.update({f"{calendar}.{targetdate}.periods": periodlist})
-        return True
+    studentobj.update({f"studentcalendar.{targetdate}.periods": periodlist})
+    return True
 
 
 #calculates the total conducted and attended hours per subject by considering both marked and unmarked periods. returns to 'calculateattendence()'
@@ -176,12 +176,12 @@ def calculateattendence(studentid: str):
             "subjectname": data["subjectname"],
             "attended": attended,
             "conducted": conducted,
-            "percentage": currentattendence,
+            "percentage": currentpercentage,
             "left": hoursleft,
             "totalhours": totalhours,
             "maxbunks": bunksleft 
         })
-        return report
+    return report
 
 #simulates bunking a day and its effect on the attendence
 def simulatebunk(studentid: str, targetdate: str, slots: List[int]=None):
@@ -251,6 +251,7 @@ def simulatebunk(studentid: str, targetdate: str, slots: List[int]=None):
                 "cuthours": hours,
                 "below75": afterbunk<75.0,
             })
+    return bunkresult
 
 if __name__=="__main__":
     calculateattendence("P012CSOM23")
