@@ -7,16 +7,16 @@ from datetime import date
 
 from firebase import saveattendence, getattendence
 from computations import calculateattendence
-from parsers import attendenceparser, periodattendenceparser, timetableparser, calenderparser, buildcalendar, editcalendar
+from parsers import attendenceparser, periodattendenceparser, timetableparser, calenderparser, buildcalendar, editcalendar, updateattendence
 
 BASEURL="https://aisat.linways.com"
 LOGINURL=f"{BASEURL}/student/index.php?next=%2Fstudent%2Fstudent.php%3Fmenu%3Dhome"
 
-username="P012CSOM23"
+studentid="P012CSOM23"
 password="Sreeram2005"
 
 #creating linways session using POST request
-def linwayslogin(username: str, password: str) -> httpx.Client:
+def linwayslogin(studentid: str, password: str) -> httpx.Client:
 
     #headers for http post request to linways 
     headers={
@@ -26,9 +26,9 @@ def linwayslogin(username: str, password: str) -> httpx.Client:
     }
     client=httpx.Client(headers=headers, follow_redirects=True, timeout=15.0)
 
-    #student username and password for completing login
+    #student studentid and password for completing login
     payload = {
-        "studentAccount": username,
+        "studentAccount": studentid,
         "studentPassword": password
     }
 
@@ -42,7 +42,7 @@ def linwayslogin(username: str, password: str) -> httpx.Client:
         return None
 
 #all-in-all attendence function
-def attendence(session, username: str):
+def attendence(session, studentid: str):
     subjectwiseurl=f"{BASEURL}/student/attendance/ajax/ajax_subjectwise_attendance.php?action=GET_REPORT"
 
     #header for POST Request to fetch attendence details
@@ -56,15 +56,15 @@ def attendence(session, username: str):
     print(f"Response Code: {response.status_code}")
 
     #function which takes the html and parses to tables using pandas
-    df=attendenceparser(username,response.text)
+    df=attendenceparser(studentid,response.text)
 
     
 
-def timetable(username: str):
-    timetabledict=timetableparser(username,r"media\timetable.jpeg")
+def timetable(studentid: str):
+    timetabledict=timetableparser(studentid,r"media\timetable.jpeg")
 
-def calendar(session, username: str):
-    semstart=calenderparser(username, r"media\calender.pdf", "B. Tech S3/S5/S7")
+def calendar(session, studentid: str, update: bool):
+    semstart=calenderparser(studentid, r"media\calender.pdf", "B. Tech S3/S5/S7")
 
     #semstart="2026-07-01"
     today=date.today()
@@ -90,18 +90,22 @@ def calendar(session, username: str):
 
     history=periodattendenceparser(response.text)
 
-    buildcalendar(username, history)
-    #editcalendar(username)
+    if update:
+        updateattendence(studentid, history)
+    else:
+        buildcalendar(studentid, history)
 
 def main():
-    session=linwayslogin(username,password)
+    session=linwayslogin(studentid,password)
     if session:
         print("Session is Active! Fetching Attendence...")
 
-        #attendence(session, username)
-        #timetable(username)
-        #calendar(session, username)
-        calculateattendence(username)
+        #attendence(session, studentid)
+        #timetable(studentid)
+        calendar(session, studentid, True)
+        #editcalendar(studentid)
+        calculateattendence(studentid)
+        
 
     else:
         print("Session is not active. Something Happend :(")
