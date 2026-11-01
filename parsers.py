@@ -354,7 +354,7 @@ def updateattendence(studentid: str, parsedportalhistory: Dict[str, List[dict]])
                     daymodified=True
 
         if daymodified:
-            updates[f"studentcalendar.{datestr}.periods"]=periods
+            updates[f"studentcalendar.{datestr}.periods"]=storedperiods
 
     if updates:
         studentobj.update(updates)
