@@ -5,6 +5,9 @@ import math
 import re
 from firebase import getstudentdata
 
+lockeddate="2026/10/19"
+tomorrowdate="2026/10/20"
+
 #for normalizing subject names by stripping unwanted 
 def normalizesubjectnames(name:str) -> str:
     if not name:
@@ -39,7 +42,7 @@ def getunmarkedsummary(studentid: str,) -> Dict[str, List[dict]]:
 
     data=studentdetails.to_dict()
     calendar=data.get("studentcalendar",{})
-    return getunmarked(calendar, date.today())
+    return getunmarked(calendar, lockeddate)  #date.today()
 
 def markunmarked(studentid: str, targetdate: str, status: str)-> bool:
     studentobj,studentdetails=getstudentdata(studentid)
@@ -149,8 +152,8 @@ def calculateattendence(studentid: str):
     today=date.today()
     tomorrow=today+timedelta(days=1)
 
-    currentattendence=subjectreport(attendence,calendar,today)
-    remaining=remaininghours(calendar,tomorrow, list(currentattendence.keys()))
+    currentattendence=subjectreport(attendence,calendar,lockeddate)
+    remaining=remaininghours(calendar,tomorrowdate, list(currentattendence.keys()))
 
     print("\n" + "=" * 88)
     print(f"{'SUBJECT':<30} | {'CURR %':<8} | {'LEFT':<5} | {'PROJ TOT':<9} | {'MAX BUNKS':<12}")
@@ -205,7 +208,7 @@ def simulatebunk(studentid: str, targetdate: str, slots: List[int]=None):
         return []
 
     periods=currentday.get("periods",[])
-    currentattendence=subjectreport(attendence,calendar,today)
+    currentattendence=subjectreport(attendence,calendar,lockeddate)
 
     simulatedslots=set(slots) if slots else None
 
