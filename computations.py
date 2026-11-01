@@ -5,13 +5,13 @@ import math
 import re
 from firebase import getstudentdata
 
-lockeddate="2026/10/19"
-tomorrowdate="2026/10/20"
+lockeddate=date(2026, 10, 19)
+tomorrowdate=lockeddate+timedelta(days=1)
 
 #for normalizing subject names by stripping unwanted 
 def normalizesubjectnames(name:str) -> str:
     if not name:
-        return
+        return ""
     cleaned=re.sub(r"[^a-zA-Z0-9]", "_", name.lower())
     return re.sub(r"_+", "_", cleaned).strip("_")
 
@@ -47,7 +47,7 @@ def getunmarkedsummary(studentid: str,) -> Dict[str, List[dict]]:
 def markunmarked(studentid: str, targetdate: str, status: str)-> bool:
     studentobj,studentdetails=getstudentdata(studentid)
     if not studentdetails.exists:
-        return {}
+        return False
 
     data=studentdetails.to_dict()
     calendar=data.get("studentcalendar",{})
