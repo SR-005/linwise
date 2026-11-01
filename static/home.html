@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linwise — KTU Attendance Radar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    /* Clean custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans antialiased selection:bg-cyan-500/20 selection:text-cyan-300">
+
+  <!-- Top Sticky Navigation Bar -->
+  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/10">
+          <i class="ph-bold ph-graduation-cap text-2xl text-white"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-bold tracking-tight text-white">Linwise Radar</h1>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Active Simulation
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 font-mono">
+            Student: <span id="header-student-id" class="text-cyan-400 font-semibold">Loading...</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button onclick="triggerPortalSync()" id="sync-portal-btn" class="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 text-xs font-semibold text-slate-200 transition shadow-sm">
+          <i class="ph ph-arrows-clockwise text-base" id="sync-icon"></i>
+          <span>Sync Portal</span>
+        </button>
+        <button onclick="refreshDashboard()" class="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white transition shadow-sm">
+          <i class="ph ph-arrow-clockwise text-base"></i>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Notification Banner -->
+  <div id="toast" class="hidden fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl border text-xs font-medium shadow-2xl transition"></div>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+
+    <!-- Lag Reconciler Alert Box (Hidden when no pending dates exist) -->
+    <section id="unmarked-alert" class="hidden rounded-2xl bg-amber-950/20 border border-amber-500/30 p-5 shadow-xl relative overflow-hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+            <i class="ph-bold ph-warning-circle text-base"></i>
+            <span>Portal Lag Detected</span>
+          </div>
+          <h2 class="text-base font-bold text-white mt-1" id="unmarked-headline">-- Pending Days</h2>
+          <p class="text-xs text-slate-400 max-w-xl mt-0.5">
+            Attendance for these dates hasn't been posted to Linways yet. Mark your actual attendance to keep the 75% runway accurate.
+          </p>
+        </div>
+        <div id="unmarked-quick-actions" class="flex items-center gap-2"></div>
+      </div>
+      <!-- Detailed Date Accordion -->
+      <div id="unmarked-list" class="mt-4 pt-3 border-t border-amber-500/20 space-y-2"></div>
+    </section>
+
+    <!-- Top Key Metrics Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-400">Total Classes Conducted</p>
+          <h3 id="stat-total-conducted" class="text-2xl font-black text-white mt-1">--</h3>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-slate-800/80 flex items-center justify-center text-cyan-400">
+          <i class="ph ph-chalkboard text-xl"></i>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-400">Overall Attendance</p>
+          <h3 id="stat-overall-pct" class="text-2xl font-black text-white mt-1">--%</h3>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-slate-800/80 flex items-center justify-center text-indigo-400">
+          <i class="ph ph-chart-pie text-xl"></i>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-400">Critical Courses (&lt; 75%)</p>
+          <h3 id="stat-critical-count" class="text-2xl font-black text-rose-400 mt-1">--</h3>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-slate-800/80 flex items-center justify-center text-rose-400">
+          <i class="ph ph-shield-warning text-xl"></i>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-400">Total Safe Bunk Buffer</p>
+          <h3 id="stat-total-bunks" class="text-2xl font-black text-emerald-400 mt-1">-- hrs</h3>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-slate-800/80 flex items-center justify-center text-emerald-400">
+          <i class="ph ph-coffee text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Workspace Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Left Column: Attendance Runway Table -->
+      <div class="lg:col-span-2 space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
+            <i class="ph ph-table text-cyan-400"></i>
+            <span>Subject Runways &amp; 75% Projections</span>
+          </h2>
+          <span class="text-xs text-slate-500 font-mono">KTU Criterion: 75%</span>
+        </div>
+
+        <div class="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-900 border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                <tr>
+                  <th class="py-3.5 px-4">Subject</th>
+                  <th class="py-3.5 px-3 text-center">Attended / Total</th>
+                  <th class="py-3.5 px-3 text-center">Current %</th>
+                  <th class="py-3.5 px-3 text-center">Classes Left</th>
+                  <th class="py-3.5 px-3 text-center">Final Projected</th>
+                  <th class="py-3.5 px-4 text-right">Max Safe Bunks</th>
+                </tr>
+              </thead>
+              <tbody id="attendance-tbody" class="divide-y divide-slate-800/60 font-medium">
+                <tr>
+                  <td colspan="6" class="p-8 text-center text-xs text-slate-500">
+                    Loading attendance calculations...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Bunk Simulator -->
+      <div class="space-y-3">
+        <h2 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
+          <i class="ph-bold ph-lightning text-amber-400"></i>
+          <span>Bunk Impact Simulator</span>
+        </h2>
+
+        <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-xl space-y-4 shadow-xl">
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Select a scheduled working date and specify periods to preview the resulting percentage drop.
+          </p>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Target Date</label>
+              <input type="date" id="sim-date" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                Target Slots <span class="text-slate-500 lowercase font-normal">(Empty for full day)</span>
+              </label>
+              <input type="text" id="sim-slots" placeholder="e.g. 2, 4" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-500">
+            </div>
+
+            <button onclick="runSimulation()" class="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition shadow-lg shadow-cyan-950/30">
+              Calculate Impact
+            </button>
+          </div>
+
+          <!-- Simulation Results Container -->
+          <div id="sim-results-card" class="hidden pt-3 border-t border-slate-800/80 space-y-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">Projected Outcome:</h4>
+            <div id="sim-output-list" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Frontend Client Script -->
+  <script>
+    let currentEarliestDate = null;
+
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = `fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl border text-xs font-medium shadow-2xl transition ${
+        isError ? 'bg-rose-950/90 border-rose-500/40 text-rose-300' : 'bg-emerald-950/90 border-emerald-500/40 text-emerald-300'
+      }`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 4000);
+    }
+
+    async function refreshDashboard() {
+      await Promise.all([fetchAttendance(), fetchUnmarked()]);
+    }
+
+    async function fetchAttendance() {
+      try {
+        const res = await fetch('/api/attendance');
+        const data = await res.json();
+        document.getElementById('header-student-id').textContent = data.studentid;
+
+        const tbody = document.getElementById('attendance-tbody');
+        tbody.innerHTML = '';
+
+        let totalAtt = 0;
+        let totalCond = 0;
+        let criticalCourses = 0;
+        let totalBunksAvail = 0;
+
+        if (!data.subjects || data.subjects.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-xs text-slate-500">No subject records found.</td></tr>';
+          return;
+        }
+
+        data.subjects.forEach(s => {
+          totalAtt += s.attended;
+          totalCond += s.conducted;
+          if (s.percentage < 75.0) criticalCourses++;
+          if (s.maxbunks > 0) totalBunksAvail += s.maxbunks;
+
+          const isDeficit = s.maxbunks < 0;
+          const isBorderline = s.maxbunks === 0;
+
+          let badgeBg = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+          let bunkText = `${s.maxbunks} hrs left`;
+
+          if (isDeficit) {
+            badgeBg = "bg-rose-500/10 text-rose-400 border-rose-500/20";
+            bunkText = `DEFICIT (${Math.abs(s.maxbunks)})`;
+          } else if (isBorderline) {
+            badgeBg = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+            bunkText = "0 hrs (Tight)";
+          }
+
+          const pctColor = s.percentage < 75 ? "text-rose-400 font-bold" : (s.percentage < 80 ? "text-amber-400" : "text-emerald-400");
+
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-800/30 transition-colors";
+          tr.innerHTML = `
+            <td class="py-3.5 px-4">
+              <span class="block text-slate-200 font-semibold text-xs leading-tight">${s.subjectname}</span>
+              <span class="block text-[10px] text-slate-500 font-mono mt-0.5">${s.key}</span>
+            </td>
+            <td class="py-3.5 px-3 text-center font-mono text-xs text-slate-300">${s.attended} / ${s.conducted}</td>
+            <td class="py-3.5 px-3 text-center">
+              <span class="inline-block font-mono text-xs ${pctColor}">${s.percentage}%</span>
+            </td>
+            <td class="py-3.5 px-3 text-center font-mono text-xs text-slate-400">${s.left}</td>
+            <td class="py-3.5 px-3 text-center font-mono text-xs text-slate-400">${s.totalhours}</td>
+            <td class="py-3.5 px-4 text-right">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border ${badgeBg}">
+                ${bunkText}
+              </span>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById('stat-total-conducted').textContent = totalCond;
+        const overallPct = totalCond > 0 ? ((totalAtt / totalCond) * 100).toFixed(1) : "0.0";
+        document.getElementById('stat-overall-pct').textContent = `${overallPct}%`;
+        document.getElementById('stat-critical-count').textContent = criticalCourses;
+        document.getElementById('stat-total-bunks').textContent = `${totalBunksAvail} hrs`;
+      } catch (err) {
+        console.error("Attendance fetch error:", err);
+      }
+    }
+
+    async function fetchUnmarked() {
+      try {
+        const res = await fetch('/api/getunmarked');
+        const data = await res.json();
+        const alertBox = document.getElementById('unmarked-alert');
+        const headline = document.getElementById('unmarked-headline');
+        const quickActions = document.getElementById('unmarked-quick-actions');
+        const listContainer = document.getElementById('unmarked-list');
+
+        const dates = Object.keys(data.unmarked || {});
+        if (dates.length === 0) {
+          alertBox.classList.add('hidden');
+          currentEarliestDate = null;
+          return;
+        }
+
+        alertBox.classList.remove('hidden');
+        currentEarliestDate = dates[0];
+        const totalPeriods = Object.values(data.unmarked).reduce((acc, curr) => acc + curr.length, 0);
+        headline.textContent = `${dates.length} Days (${totalPeriods} Periods) Awaiting Review`;
+
+        quickActions.innerHTML = `
+          <button onclick="reconcile('${currentEarliestDate}', 'allpresent')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs transition">
+            Mark Present (${currentEarliestDate})
+          </button>
+          <button onclick="reconcile('${currentEarliestDate}', 'allabsent')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-semibold text-xs transition">
+            Mark Absent
+          </button>
+        `;
+
+        listContainer.innerHTML = '';
+        dates.forEach(d => {
+          const periods = data.unmarked[d];
+          const div = document.createElement('div');
+          div.className = "p-2.5 rounded-lg bg-slate-950/60 border border-amber-500/10 flex items-center justify-between text-xs";
+          const tags = periods.map(p => `P${p.slot}: ${p.subject.substring(0, 8)}`).join(', ');
+
+          div.innerHTML = `
+            <div>
+              <span class="font-mono font-bold text-amber-300">${d}</span>
+              <span class="text-slate-400 ml-2">(${periods.length} hrs: ${tags})</span>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="reconcile('${d}', 'allpresent')" class="px-2 py-1 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded font-medium text-[11px]">Present</button>
+              <button onclick="reconcile('${d}', 'allabsent')" class="px-2 py-1 bg-rose-600/80 hover:bg-rose-600 text-white rounded font-medium text-[11px]">Absent</button>
+            </div>
+          `;
+          listContainer.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Unmarked fetch error:", err);
+      }
+    }
+
+    async function reconcile(dateStr, action) {
+      try {
+        const res = await fetch('/api/markunmarked', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: dateStr, action: action })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(`Reconciled ${dateStr} as ${action === 'allpresent' ? 'Present' : 'Absent'}`);
+          refreshDashboard();
+        } else {
+          showToast(data.detail || "Failed to reconcile.", true);
+        }
+      } catch (err) {
+        showToast("Error updating attendance override.", true);
+      }
+    }
+
+    async function runSimulation() {
+      const dt = document.getElementById('sim-date').value;
+      const slotsRaw = document.getElementById('sim-slots').value.trim();
+
+      if (!dt) {
+        alert("Please select a date to simulate.");
+        return;
+      }
+
+      const slots = slotsRaw
+        ? slotsRaw.split(',').map(s => parseInt(s.trim())).filter(s => !isNaN(s))
+        : null;
+
+      try {
+        const res = await fetch('/api/simulate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: dt, slots: slots })
+        });
+        const data = await res.json();
+        const card = document.getElementById('sim-results-card');
+        const list = document.getElementById('sim-output-list');
+        list.innerHTML = '';
+        card.classList.remove('hidden');
+
+        if (!data.results || data.results.length === 0) {
+          list.innerHTML = `<p class="text-xs text-amber-400">No scheduled periods found for ${dt}.</p>`;
+          return;
+        }
+
+        data.results.forEach(r => {
+          const item = document.createElement('div');
+          item.className = "p-2 rounded bg-slate-950 border border-slate-800 text-xs flex justify-between items-center";
+          const badge = r.below75
+            ? `<span class="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-400 font-bold ml-1 text-[10px]">CRITICAL</span>`
+            : '';
+
+          item.innerHTML = `
+            <div>
+              <span class="font-medium text-slate-200 block">${r.subject}</span>
+              <span class="text-[10px] text-slate-500">Missed ${r.cuthours} hr(s)</span>
+            </div>
+            <div class="text-right font-mono">
+              <div>${r.currentpercentage}% &rarr; <span class="${r.below75 ? 'text-rose-400 font-bold' : 'text-amber-400'}">${r.newpercentage}%</span></div>
+              <span class="text-[10px] text-rose-400">${r.drop}% drop ${badge}</span>
+            </div>
+          `;
+          listContainer.appendChild(item);
+        });
+      } catch (err) {
+        showToast("Failed to run bunk simulation.", true);
+      }
+    }
+
+    async function triggerPortalSync() {
+      const icon = document.getElementById('sync-icon');
+      icon.classList.add('animate-spin');
+      try {
+        const res = await fetch('/api/sync', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(data.message || "Sync complete!");
+          refreshDashboard();
+        } else {
+          showToast(data.detail || "Sync failed.", true);
+        }
+      } catch (err) {
+        showToast("Network error during sync.", true);
+      } finally {
+        icon.classList.remove('animate-spin');
+      }
+    }
+
+    // Default simulation input to locked evaluation date
+    document.getElementById('sim-date').value = "2026-10-20";
+
+    // Initial load
+    refreshDashboard();
+  </script>
+</body>
+</html>
