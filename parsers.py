@@ -305,7 +305,7 @@ def updateattendence(studentid: str, parsedportalhistory: Dict[str, List[dict]])
         raise ValueError(f"Student record '{studentid}' not found.")
 
     studentdetails=studentdetails.to_dict()
-    calendar=studentdetails.get("calendar",{})
+    calendar=studentdetails.get("studentcalendar",{})
 
     updatedcount=0
     preserved=0
@@ -319,7 +319,7 @@ def updateattendence(studentid: str, parsedportalhistory: Dict[str, List[dict]])
         if day.get("status")!="working":
             continue
 
-        storedperiods=day.get(periods,[])
+        storedperiods=day.get("periods",[])
         newdperiods={}
         for period in periods:
             try:
@@ -354,7 +354,7 @@ def updateattendence(studentid: str, parsedportalhistory: Dict[str, List[dict]])
                     daymodified=True
 
         if daymodified:
-            updates[f"calendar.{datestr}.periods"]=periods
+            updates[f"studentcalendar.{datestr}.periods"]=periods
 
     if updates:
         studentobj.update(updates)
