@@ -451,6 +451,12 @@ def editoverrides(studentid: str):
     studentobj.update({f"studentcalendar.{targetdate}.periods": periods})
     print(f"[+] Slot {slotnum} on {targetdate} updated to '{targetslot['attendance']}' in Firestore.")
 
+def evensaturdays(currendate: date) -> bool:
+    if currendate.weekday()!=5:
+        return False
+    saturdayindex=(currendate-1)//7 + 1
+    return saturdayindex in (2,4)
+
 def buildcalendar(studentid: str, attendencehistory: Dict[str, List[dict]]):
     studentobj,studentdetails=getstudentdata(studentid)
     
@@ -486,6 +492,15 @@ def buildcalendar(studentid: str, attendencehistory: Dict[str, List[dict]]):
                 "status": "holiday",
                 "periods": [],
                 "reason": "Sunday"
+            }
+
+        if evensaturdays(formatteddate):
+            saturdayindex=(formatteddate-1)//7 + 1          #to know if it is 2nd or 4th saturday
+            fullcalender[formatteddate]={
+                "day": "saturday",
+                "status": "holiday",
+                "periods": [],
+                "reason": f"{saturdayindex}th Saturday Holiday"
             }
 
         elif formatteddate in ktuholidays:
@@ -600,6 +615,7 @@ def editcalendar(studentid: str):
 
         elif choice=="4":
             break
+
 
 if __name__=="__main__":
     #timetableparser("P012CSOM23",r"media\timetable.jpeg")
