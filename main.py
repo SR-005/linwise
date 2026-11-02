@@ -171,5 +171,28 @@ def apisetuptimetable():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Timetable parsing failed: {str(e)}")
 
+
+#AI Chatbot helper Models and POST Endpoints
+class ChatRequest(BaseModel):
+    message: str
+
+class ChatResponse(BaseModel):
+    text: str
+    widget: Optional[dict]=None
+
+@app.post("/chat",response_model=ChatResponse)
+async def chatbot(req: ChatResponse):
+    userprompt=req.message.strip()
+
+    #tool calling ..
+
+    response=0
+    chatwidget=0
+    return ChatResponse(
+        text=response,
+        widget=chatwidget
+    )
+
+
 if __name__=="__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
