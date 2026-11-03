@@ -10,15 +10,18 @@ import httpx
 import json
 import pandas as pd
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 
-from firebase import saveattendence, getattendence
+from firebase import saveattendence, getattendence, getstudentdata
 import computations
 from parsers import attendenceparser, periodattendenceparser, timetableparser, calenderparser, buildcalendar, editcalendar, updateattendence
+from agent import agent
 
 app=FastAPI(title="Linwise")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+chatsession=Dict[str, List[Any]]={}
 
 BASEURL="https://aisat.linways.com"
 LOGINURL=f"{BASEURL}/student/index.php?next=%2Fstudent%2Fstudent.php%3Fmenu%3Dhome"
@@ -105,24 +108,33 @@ def initialtimetable(studentid: str):
     timetableparser(studentid, r"media/timetable.jpeg")
 
 
+class AttendenceStatusRequest(BaseModel):
+    date: str
+    action: str
+
+class ChatRequest(BaseModel):
+    message: str
+    sessionid: Optional[str] = "defaultuser"
+
+class ChatResponse(BaseModel):
+    text: str
+    widget: Optional[dict]=None
+    sessionid: str
 
 @app.get("/")
 def dashboard():
     return FileResponse("static/home.html")
 
-#returns calculates percentages, bunk limits etc
-@app.get("/api/attendance")
-def apiattendance():
-    data=computations.calculateattendence(studentid)
-    return{"studentid": studentid, "subjects": data}
+#to fetch and display calendar 
+@app.post("/api/calendar")
+def getcalendar():
+    _,studentdetails=getstudentdata(studentid)
+    if not studentdetails.exists:
+        raise HTTPException(status_code=404, detail="Student record not found.")
 
-@app.get("/api/getunmarked")
-def apigetunmarked():
-    return {"unmarked": computations.getunmarkedsummary(studentid)}
-
-class AttendenceStatusRequest(BaseModel):
-    date: str
-    action: str
+    studentdata=studentdetails.to_dict()
+    calendar=studentdata.get("studentcalendar", {})
+    return {"calendar": calendar}
 
 @app.post("/api/markunmarked")
 def apimarkunmarked(req: AttendenceStatusRequest):
@@ -131,17 +143,6 @@ def apimarkunmarked(req: AttendenceStatusRequest):
     if not success:
         raise HTTPException(status_code=400, detail="Failed to reconcile selected date.")
     return {"success": True, "date": req.date, "attendance": newstatus}
-
-class SimulationRequest(BaseModel):
-    date: str
-    slots: Optional[List[int]]=None
-
-@app.post("/api/simulate")
-def apisimulate(req: SimulationRequest):
-    results=computations.simulatebunk(studentid, req.date, req.slots)
-    return {
-        "results": results
-    }
 
 @app.post("/api/sync")
 def apisync():
@@ -161,37 +162,22 @@ def apisync():
     finally:
         session.close()
 
-@app.post("/api/setup/timetable")
-def apisetuptimetable():
-    try:
-        result=initialtimetable(studentid)
-        return{
-            "success": True, "message": "Timetable parsed and registered successfully.", "data": result
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Timetable parsing failed: {str(e)}")
-
-
 #AI Chatbot helper Models and POST Endpoints
-class ChatRequest(BaseModel):
-    message: str
-
-class ChatResponse(BaseModel):
-    text: str
-    widget: Optional[dict]=None
-
 @app.post("/chat",response_model=ChatResponse)
-async def chatbot(req: ChatResponse):
-    userprompt=req.message.strip()
+async def chatbot(req: ChatRequest):
+    sessionid=req.sessionid or "defaultuser"
+    history=chatsession.get(sessionid,[])
 
-    #tool calling ..
-
-    response=0
-    chatwidget=0
-    return ChatResponse(
-        text=response,
-        widget=chatwidget
-    )
+    try:
+        responsetext, responsewidget, updatedhistory=agent(req.message, history)
+        chatsession[sessionid]=updatedhistory
+        return ChatResponse(
+            text=responsetext,
+            widget=responsewidget,
+            sessionid=sessionid
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Chat processing failed: {str(e)}")
 
 
 if __name__=="__main__":
