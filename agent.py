@@ -29,7 +29,7 @@ def simulatebunktool(targetdate: str, slots: list[int]=None) -> list:
     return computations.simulatebunk(studentid, targetdate, slots)
 
 tools=[calculateattendancetool, getunmarkedtool, simulatebunktool]
-toolmapping={t.name: t for t in tool}
+toolmapping={t.name: t for t in tools}
 
 SYSTEM_PROMPT = """You are Linwise AI, an intelligent KTU attendance companion.
 - Your goal is to help students track their attendance, manage their 75% runway, simulate bunks, and resolve unposted portal dates.
@@ -39,6 +39,19 @@ SYSTEM_PROMPT = """You are Linwise AI, an intelligent KTU attendance companion.
 
 llm=ChatGoogleGenerativeAI(model="gemini-flash-lite-latest")    #creating llm
 llmwithtools=llm.bind_tools(tools)              #binding tools with llm
+
+def extracttext(content) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        textblocks=[]
+        for block in content:
+            if isinstance(block, dict) and "text" in block:
+                textblocks.append(block["text"])
+            elif isinstance(block, str):
+                textblocks.append(block)
+        return "".join(textblocks)
+    return str(content)
 
 def agent(usermessage: str, chathistory: List[Any]) -> Tuple[str, Optional[Dict[str, Any]], List[Any]]:
     history=list(chathistory)
@@ -79,9 +92,9 @@ def agent(usermessage: str, chathistory: List[Any]) -> Tuple[str, Optional[Dict[
 
         finalresponse=llmwithtools.invoke(history)      #second model call to generate NLP output to tool calling and its result etc
         history.append(finalresponse)
-        replytext=str(finalresponse.content)        #converting response content to string
+        replytext=extracttext(finalresponse.content)        #converting response content to string
     else:
-        replytext=str(response.content)  
+        replytext=extracttext(response.content)
 
     return replytext, widgetpayload, history
             
