@@ -21,7 +21,7 @@ from agent import agent
 app=FastAPI(title="Linwise")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-chatsession=Dict[str, List[Any]]={}
+chatsession: Dict[str, List[Any]]={}
 
 BASEURL="https://aisat.linways.com"
 LOGINURL=f"{BASEURL}/student/index.php?next=%2Fstudent%2Fstudent.php%3Fmenu%3Dhome"
@@ -127,7 +127,7 @@ def dashboard():
 
 #to fetch and display calendar 
 @app.post("/api/calendar")
-def getcalendar():
+def apigetcalendar():
     _,studentdetails=getstudentdata(studentid)
     if not studentdetails.exists:
         raise HTTPException(status_code=404, detail="Student record not found.")
