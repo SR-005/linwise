@@ -15,6 +15,71 @@ def normalizesubjectnames(name:str) -> str:
     cleaned=re.sub(r"[^a-zA-Z0-9]", "_", name.lower())
     return re.sub(r"_+", "_", cleaned).strip("_")
 
+def markholiday(studentid: str, targetdate: str, reason: str="Declared Holiday") -> bool:
+    studentobj, studentdetails = getstudentdata(studentid)
+    if not studentdetails.exists:
+        return False
+
+    data=studentdetails.to_dict()
+    calendar=data.get("studentcalendar", {})
+    if targetdate not in calendar:
+        return False
+
+    calendar[targetdate]["status"]="holiday"        #resetng the parameters
+    calendar[targetdate]["reason"]=reason
+    calendar[targetdate]["periods"]=[]
+
+    studentobj.update({f"studentcalendar.{targetdate}": calendar[targetdate]})  #updating in firebase
+    return True
+
+def unmarkholiday(studentid: str, targetdate: str) -> bool:
+    studentobj, studentdetails = getstudentdata(studentid)
+    if not studentdetails.exists:
+        return False
+
+    data=studentdetails.to_dict()
+    calendar=data.get("studentcalendar", {})
+    timeetable=data.get("timetable", {})
+    if targetdate not in calendar:
+        return False
+
+    dayname=calendar[targetdate].get("day", "").lower()
+    if dayname=="sunday":
+        return False
+
+    periods=timeetable.get(dayname,[])
+    reconstructedperiods=[]
+    for index, subject in enumerate(periods,start=1):
+        reconstructedperiods.append({
+            "slot": index,
+            "subject": subject if subject else "free",
+            "attendance": "free" if (not subject or subject == "free") else "notmarked",
+            "source": "linways"
+        })
+
+    calendar[targetdate]["status"]="working"
+    calendar[targetdate]["reason"]=""
+    calendar[targetdate]["periods"]=reconstructedperiods
+
+    studentobj.update({f"studentcalendar.{targetdate}": calendar[targetdate]})
+    return True
+
+def edittimetable(studentid: str, dayname: str, periodnumber: int, newsubject: str)->bool:
+    studentobj,studentdetails=getstudentdata(studentid)
+    if not studentdetails.exists:
+        return False
+
+    data=studentdetails.to_dict()
+    timetable=data.get("timetable", {})
+    day=dayname.lower().strip()
+
+    if day not in timetable or not (1 <= periodnumber <= 6):
+        return False
+
+    timetable[day][periodnumber-1]=newsubject
+    studentobj.update({"timetable": timetable})
+    return True
+
 #creates a list of unmarked dates and return it to 'markunmarked()'
 def getunmarked(calender: dict, today: date) -> Dict[str, List[dict]]:
     unmarked={}
