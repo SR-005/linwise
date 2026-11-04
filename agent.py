@@ -73,21 +73,29 @@ def agent(usermessage: str, chathistory: List[Any]) -> Tuple[str, Optional[Dict[
             selectedtool=toolmapping[toolname]
             tooloutput=selectedtool.invoke(toolargs)
 
+            if isinstance(tooloutput, (dict, list)):
+                toolcontent=json.dumps(tooloutput)
+                rawdictdata=tooloutput
+            else:
+                toolcontent=str(tooloutput)
+                try:
+                    rawdictdata=json.loads(tooloutput)
+                except:
+                    rawdictdata={}
+
             history.append(
                 ToolMessage(
                     content=tooloutput,
-                    toolcallid=toolcall["id"],
+                    tool_call_id=toolcall["id"],
                     name=toolname
                 )
             )
 
             #to check if the tool that is called required a widget in the chatbox
-            if toolname=="getunmarkedtool":
-                rawdata=json.loads(tooloutput)
-                if rawdata:
+            if toolname=="getunmarkedtool" and rawdictdata:
                     widgetpayload={
                         "type": getunmarkedtool,
-                        "unmarked": rawdata
+                        "unmarked": rawdictdata
                     }
 
         finalresponse=llmwithtools.invoke(history)      #second model call to generate NLP output to tool calling and its result etc
