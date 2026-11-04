@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Linwise — KTU Attendance Radar</title>
+  <title>Linwise — KTU Attendance Radar & AI Assistant</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
-    /* Clean custom scrollbar */
+    /* Custom clean scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #020617; }
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
@@ -16,8 +16,8 @@
 </head>
 <body class="h-full flex flex-col font-sans antialiased selection:bg-cyan-500/20 selection:text-cyan-300">
 
-  <!-- Top Sticky Navigation Bar -->
-  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40 px-6 py-4">
+  <!-- Header -->
+  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40 px-6 py-3.5">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/10">
@@ -25,13 +25,13 @@
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-base font-bold tracking-tight text-white">Linwise Radar</h1>
+            <h1 class="text-base font-bold tracking-tight text-white">Linwise Workspace</h1>
             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Active Simulation
+              AI Copilot Active
             </span>
           </div>
           <p class="text-xs text-slate-400 font-mono">
-            Student: <span id="header-student-id" class="text-cyan-400 font-semibold">Loading...</span>
+            Student ID: <span class="text-cyan-400 font-semibold">P012CSOM23</span>
           </p>
         </div>
       </div>
@@ -41,307 +41,421 @@
           <i class="ph ph-arrows-clockwise text-base" id="sync-icon"></i>
           <span>Sync Portal</span>
         </button>
-        <button onclick="refreshDashboard()" class="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white transition shadow-sm">
-          <i class="ph ph-arrow-clockwise text-base"></i>
-          <span>Refresh</span>
-        </button>
       </div>
     </div>
   </header>
 
-  <!-- Notification Banner -->
-  <div id="toast" class="hidden fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl border text-xs font-medium shadow-2xl transition"></div>
+  <!-- Notification Toast -->
+  <div id="toast" class="hidden fixed bottom-6 left-6 z-50 px-4 py-3 rounded-xl border text-xs font-medium shadow-2xl transition"></div>
 
-  <!-- Main Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+  <!-- Workspace Grid -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
 
-    <!-- Lag Reconciler Alert Box (Hidden when no pending dates exist) -->
-    <section id="unmarked-alert" class="hidden rounded-2xl bg-amber-950/20 border border-amber-500/30 p-5 shadow-xl relative overflow-hidden">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <!-- LEFT: Visual Academic Calendar (7 cols) -->
+    <section class="lg:col-span-7 flex flex-col bg-slate-900/40 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4 overflow-hidden">
+      <!-- Calendar Controls -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
         <div>
-          <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
-            <i class="ph-bold ph-warning-circle text-base"></i>
-            <span>Portal Lag Detected</span>
-          </div>
-          <h2 class="text-base font-bold text-white mt-1" id="unmarked-headline">-- Pending Days</h2>
-          <p class="text-xs text-slate-400 max-w-xl mt-0.5">
-            Attendance for these dates hasn't been posted to Linways yet. Mark your actual attendance to keep the 75% runway accurate.
-          </p>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="ph-bold ph-calendar-blank text-cyan-400"></i>
+            <span id="calendar-month-label">Academic Calendar</span>
+          </h2>
+          <p class="text-[11px] text-slate-400">Click any date to inspect scheduled periods.</p>
         </div>
-        <div id="unmarked-quick-actions" class="flex items-center gap-2"></div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="changeMonth(-1)" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            <i class="ph-bold ph-caret-left text-sm"></i>
+          </button>
+          <button onclick="changeMonth(1)" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            <i class="ph-bold ph-caret-right text-sm"></i>
+          </button>
+        </div>
       </div>
-      <!-- Detailed Date Accordion -->
-      <div id="unmarked-list" class="mt-4 pt-3 border-t border-amber-500/20 space-y-2"></div>
+
+      <!-- Days of Week Header -->
+      <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div>Mon</div>
+        <div>Tue</div>
+        <div>Wed</div>
+        <div>Thu</div>
+        <div>Fri</div>
+        <div class="text-amber-400">Sat</div>
+        <div class="text-rose-400">Sun</div>
+      </div>
+
+      <!-- Calendar Month Grid -->
+      <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 flex-1 overflow-y-auto pr-1">
+        <!-- Rendered via JS -->
+      </div>
+
+      <!-- Selected Date Day Details Drawer -->
+      <div id="day-details-panel" class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-slate-200" id="detail-date-title">Select a date</span>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400" id="detail-date-badge">--</span>
+        </div>
+        <div id="detail-periods-list" class="flex flex-wrap gap-1.5 text-[11px]">
+          <span class="text-slate-500 italic">Click a working day above to view periods.</span>
+        </div>
+      </div>
     </section>
 
-    <!-- Top Key Metrics Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between">
-        <div>
-          <p class="text-xs font-medium text-slate-400">Total Classes Conducted</p>
-          <h3 id="stat-total-conducted" class="text-2xl font-black text-white mt-1">--</h3>
+    <!-- RIGHT: AI Chatbot (5 cols) -->
+    <section class="lg:col-span-5 flex flex-col bg-slate-900/50 border border-slate-800 rounded-2xl shadow-xl overflow-hidden h-[680px]">
+      
+      <!-- Chat Header -->
+      <div class="px-4 py-3 border-b border-slate-800/80 bg-slate-900/80 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-200">Linwise AI Copilot</span>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-slate-800/80 flex items-center justify-center text-cyan-400">
-          <i class="ph ph-chalkboard text-xl"></i>
-        </div>
+        <button onclick="clearChatHistory()" class="text-[11px] text-slate-400 hover:text-slate-200 transition">
+          Clear Chat
+        </button>
       </div>
 
-      <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between">
-        <div>
-          <p class="text-xs font-medium text-slate-400">Overall Attendance</p>
-          <h3 id="stat-overall-pct" class="text-2xl font-black text-white mt-1">--%</h3>
-        </div>
-        <div class="w-10 h-10 rounded-lg bg-slate-800/80 flex items-center justify-center text-indigo-400">
-          <i class="ph ph-chart-pie text-xl"></i>
-        </div>
+      <!-- Quick Prompt Pills -->
+      <div class="p-2.5 bg-slate-950/50 border-b border-slate-800/60 flex items-center gap-1.5 overflow-x-auto text-[11px]">
+        <button onclick="sendQuickPrompt('What is my current attendance and safe bunks?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/50 transition">
+          📊 Attendance Summary
+        </button>
+        <button onclick="sendQuickPrompt('Are there any unmarked portal dates lagging?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/50 transition">
+          ⚠️ Check Lag Dates
+        </button>
+        <button onclick="sendQuickPrompt('Can I bunk classes on 2026-10-20?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/50 transition">
+          ⚡ Bunk 2026-10-20
+        </button>
       </div>
 
-      <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between">
-        <div>
-          <p class="text-xs font-medium text-slate-400">Critical Courses (&lt; 75%)</p>
-          <h3 id="stat-critical-count" class="text-2xl font-black text-rose-400 mt-1">--</h3>
-        </div>
-        <div class="w-10 h-10 rounded-lg bg-slate-800/80 flex items-center justify-center text-rose-400">
-          <i class="ph ph-shield-warning text-xl"></i>
-        </div>
-      </div>
-
-      <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between">
-        <div>
-          <p class="text-xs font-medium text-slate-400">Total Safe Bunk Buffer</p>
-          <h3 id="stat-total-bunks" class="text-2xl font-black text-emerald-400 mt-1">-- hrs</h3>
-        </div>
-        <div class="w-10 h-10 rounded-lg bg-slate-800/80 flex items-center justify-center text-emerald-400">
-          <i class="ph ph-coffee text-xl"></i>
-        </div>
-      </div>
-    </div>
-
-    <!-- Main Workspace Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-      <!-- Left Column: Attendance Runway Table -->
-      <div class="lg:col-span-2 space-y-3">
-        <div class="flex items-center justify-between">
-          <h2 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
-            <i class="ph ph-table text-cyan-400"></i>
-            <span>Subject Runways &amp; 75% Projections</span>
-          </h2>
-          <span class="text-xs text-slate-500 font-mono">KTU Criterion: 75%</span>
-        </div>
-
-        <div class="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-              <thead class="bg-slate-900 border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-                <tr>
-                  <th class="py-3.5 px-4">Subject</th>
-                  <th class="py-3.5 px-3 text-center">Attended / Total</th>
-                  <th class="py-3.5 px-3 text-center">Current %</th>
-                  <th class="py-3.5 px-3 text-center">Classes Left</th>
-                  <th class="py-3.5 px-3 text-center">Final Projected</th>
-                  <th class="py-3.5 px-4 text-right">Max Safe Bunks</th>
-                </tr>
-              </thead>
-              <tbody id="attendance-tbody" class="divide-y divide-slate-800/60 font-medium">
-                <tr>
-                  <td colspan="6" class="p-8 text-center text-xs text-slate-500">
-                    Loading attendance calculations...
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+      <!-- Messages Thread -->
+      <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3.5 text-xs">
+        <!-- Initial Bot Greeting -->
+        <div class="flex gap-2.5 items-start">
+          <div class="w-6 h-6 rounded-lg bg-cyan-600 flex items-center justify-center text-white shrink-0 mt-0.5">
+            <i class="ph-bold ph-robot text-sm"></i>
+          </div>
+          <div class="bg-slate-800/80 text-slate-200 p-3 rounded-2xl rounded-tl-sm max-w-[85%] leading-relaxed shadow-sm">
+            Hello! I am your Linwise attendance companion. Ask me anything about your current subject percentages, safe bunks, or unposted classes.
           </div>
         </div>
       </div>
 
-      <!-- Right Column: Bunk Simulator -->
-      <div class="space-y-3">
-        <h2 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
-          <i class="ph-bold ph-lightning text-amber-400"></i>
-          <span>Bunk Impact Simulator</span>
-        </h2>
-
-        <div class="bg-slate-900/50 border border-slate-800 p-5 rounded-xl space-y-4 shadow-xl">
-          <p class="text-xs text-slate-400 leading-relaxed">
-            Select a scheduled working date and specify periods to preview the resulting percentage drop.
-          </p>
-
-          <div class="space-y-3">
-            <div>
-              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Target Date</label>
-              <input type="date" id="sim-date" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-500">
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                Target Slots <span class="text-slate-500 lowercase font-normal">(Empty for full day)</span>
-              </label>
-              <input type="text" id="sim-slots" placeholder="e.g. 2, 4" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 font-mono focus:outline-none focus:border-cyan-500">
-            </div>
-
-            <button onclick="runSimulation()" class="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition shadow-lg shadow-cyan-950/30">
-              Calculate Impact
-            </button>
-          </div>
-
-          <!-- Simulation Results Container -->
-          <div id="sim-results-card" class="hidden pt-3 border-t border-slate-800/80 space-y-2">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">Projected Outcome:</h4>
-            <div id="sim-output-list" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
-          </div>
-        </div>
+      <!-- Input Bar -->
+      <div class="p-3 border-t border-slate-800/80 bg-slate-950/60">
+        <form id="chat-form" onsubmit="handleChatSubmit(event)" class="flex items-center gap-2">
+          <input 
+            type="text" 
+            id="chat-input" 
+            placeholder="Ask about attendance, bunks, or lag dates..." 
+            class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition"
+            autocomplete="off"
+          />
+          <button 
+            type="submit" 
+            id="chat-send-btn"
+            class="px-3.5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold transition flex items-center justify-center shadow-lg shadow-cyan-950/40"
+          >
+            <i class="ph-bold ph-paper-plane-right text-sm"></i>
+          </button>
+        </form>
       </div>
 
-    </div>
+    </section>
+
   </main>
 
-  <!-- Frontend Client Script -->
+<!-- Client JavaScript -->
   <script>
-    let currentEarliestDate = null;
+    let calendarStore = {};
+    let activeMonthDate = new Date(2026, 9, 1); // Defaults to October 2026 (Month index 9)
+    const sessionId = "session_" + Math.random().toString(36).substring(2, 9);
 
+    // --- Toast Notifications ---
     function showToast(msg, isError = false) {
       const toast = document.getElementById('toast');
       toast.textContent = msg;
-      toast.className = `fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl border text-xs font-medium shadow-2xl transition ${
+      toast.className = `fixed bottom-6 left-6 z-50 px-4 py-3 rounded-xl border text-xs font-medium shadow-2xl transition ${
         isError ? 'bg-rose-950/90 border-rose-500/40 text-rose-300' : 'bg-emerald-950/90 border-emerald-500/40 text-emerald-300'
       }`;
       toast.classList.remove('hidden');
       setTimeout(() => toast.classList.add('hidden'), 4000);
     }
 
-    async function refreshDashboard() {
-      await Promise.all([fetchAttendance(), fetchUnmarked()]);
+    // --- Response Cleaning & Formatting ---
+    function parseResponseText(raw) {
+      if (!raw) return '';
+
+      // If response is already an array of block objects
+      if (Array.isArray(raw)) {
+        const textPart = raw.find(b => b && (b.text || b.type === 'text'));
+        if (textPart && textPart.text) return textPart.text;
+      }
+
+      // If response is a dict object
+      if (typeof raw === 'object') {
+        if (raw.text) return raw.text;
+        return JSON.stringify(raw);
+      }
+
+      let text = String(raw).trim();
+
+      // Check for Python stringified dict / list representation with 'extras', 'signature', etc.
+      if (text.startsWith("[{'") || text.startsWith('[{"') || text.startsWith("{'text'") || text.startsWith('{"text"')) {
+        // Regex extracts value of 'text': '...' or "text": "..."
+        const match = text.match(/['"]text['"]\s*:\s*(['"])((?:\\.|(?!\1)[\s\S])*)\1/);
+        if (match && match[2]) {
+          text = match[2]
+            .replace(/\\n/g, '\n')
+            .replace(/\\'/g, "'")
+            .replace(/\\"/g, '"');
+        }
+      }
+
+      return text;
     }
 
-    async function fetchAttendance() {
+    function formatMarkdown(text) {
+      if (!text) return '';
+      return text
+        // Bold: **text**
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+        // Inline code / badges: `code`
+        .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700/60 font-mono text-[11px] text-cyan-300">$1</code>')
+        // Bullet points at line start
+        .replace(/^[\*\-]\s+(.*)$/gm, '<li class="ml-3 list-disc text-slate-300">$1</li>')
+        // Newlines to <br>
+        .replace(/\n/g, '<br>');
+    }
+
+    // --- 1. Visual Academic Calendar ---
+    async function loadCalendar() {
       try {
-        const res = await fetch('/api/attendance');
+        const res = await fetch('/api/calendar', { method: 'POST' });
         const data = await res.json();
-        document.getElementById('header-student-id').textContent = data.studentid;
+        calendarStore = data.calendar || {};
+        renderCalendar();
+      } catch (err) {
+        console.error("Failed to load calendar:", err);
+      }
+    }
 
-        const tbody = document.getElementById('attendance-tbody');
-        tbody.innerHTML = '';
+    function changeMonth(delta) {
+      activeMonthDate.setMonth(activeMonthDate.getMonth() + delta);
+      renderCalendar();
+    }
 
-        let totalAtt = 0;
-        let totalCond = 0;
-        let criticalCourses = 0;
-        let totalBunksAvail = 0;
+    function renderCalendar() {
+      const year = activeMonthDate.getFullYear();
+      const month = activeMonthDate.getMonth();
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      document.getElementById('calendar-month-label').textContent = `${monthNames[month]} ${year}`;
 
-        if (!data.subjects || data.subjects.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-xs text-slate-500">No subject records found.</td></tr>';
-          return;
-        }
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
 
-        data.subjects.forEach(s => {
-          totalAtt += s.attended;
-          totalCond += s.conducted;
-          if (s.percentage < 75.0) criticalCourses++;
-          if (s.maxbunks > 0) totalBunksAvail += s.maxbunks;
+      const firstDayOfMonth = new Date(year, month, 1);
+      const lastDayOfMonth = new Date(year, month + 1, 0);
 
-          const isDeficit = s.maxbunks < 0;
-          const isBorderline = s.maxbunks === 0;
+      // Convert Sunday-first (0) to Monday-first (0)
+      let startingDay = firstDayOfMonth.getDay() - 1;
+      if (startingDay === -1) startingDay = 6;
 
-          let badgeBg = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-          let bunkText = `${s.maxbunks} hrs left`;
+      // Blank prefix cells
+      for (let i = 0; i < startingDay; i++) {
+        const blank = document.createElement('div');
+        blank.className = "h-16 rounded-xl bg-slate-950/30 border border-slate-900/40";
+        grid.appendChild(blank);
+      }
 
-          if (isDeficit) {
-            badgeBg = "bg-rose-500/10 text-rose-400 border-rose-500/20";
-            bunkText = `DEFICIT (${Math.abs(s.maxbunks)})`;
-          } else if (isBorderline) {
-            badgeBg = "bg-amber-500/10 text-amber-400 border-amber-500/20";
-            bunkText = "0 hrs (Tight)";
+      for (let d = 1; d <= lastDayOfMonth.getDate(); d++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const dayData = calendarStore[dateStr];
+
+        const cell = document.createElement('div');
+        cell.onclick = () => showDayDetails(dateStr, dayData);
+
+        let bgStyle = "bg-slate-950/60 border-slate-800/60 hover:border-slate-600";
+        let statusBadge = "";
+
+        if (dayData) {
+          if (dayData.status === "holiday") {
+            if (dayData.day === "sunday") {
+              bgStyle = "bg-rose-950/20 border-rose-900/30 text-rose-300";
+              statusBadge = `<span class="text-[9px] text-rose-400 font-mono">SUN</span>`;
+            } else if (dayData.reason && dayData.reason.includes("Saturday")) {
+              bgStyle = "bg-amber-950/20 border-amber-900/30 text-amber-300";
+              statusBadge = `<span class="text-[9px] text-amber-400 font-mono">SAT</span>`;
+            } else {
+              bgStyle = "bg-purple-950/20 border-purple-900/30 text-purple-300";
+              statusBadge = `<span class="text-[9px] text-purple-400 truncate font-mono">${(dayData.reason || '').substring(0, 6)}</span>`;
+            }
+          } else if (dayData.status === "working") {
+            bgStyle = "bg-slate-900/80 border-slate-700/50 hover:border-cyan-500 text-slate-200 cursor-pointer";
+            const periodCount = (dayData.periods || []).filter(p => p.subject !== "free").length;
+            statusBadge = `<span class="text-[9px] text-cyan-400 font-mono">${periodCount}h</span>`;
           }
-
-          const pctColor = s.percentage < 75 ? "text-rose-400 font-bold" : (s.percentage < 80 ? "text-amber-400" : "text-emerald-400");
-
-          const tr = document.createElement('tr');
-          tr.className = "hover:bg-slate-800/30 transition-colors";
-          tr.innerHTML = `
-            <td class="py-3.5 px-4">
-              <span class="block text-slate-200 font-semibold text-xs leading-tight">${s.subjectname}</span>
-              <span class="block text-[10px] text-slate-500 font-mono mt-0.5">${s.key}</span>
-            </td>
-            <td class="py-3.5 px-3 text-center font-mono text-xs text-slate-300">${s.attended} / ${s.conducted}</td>
-            <td class="py-3.5 px-3 text-center">
-              <span class="inline-block font-mono text-xs ${pctColor}">${s.percentage}%</span>
-            </td>
-            <td class="py-3.5 px-3 text-center font-mono text-xs text-slate-400">${s.left}</td>
-            <td class="py-3.5 px-3 text-center font-mono text-xs text-slate-400">${s.totalhours}</td>
-            <td class="py-3.5 px-4 text-right">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border ${badgeBg}">
-                ${bunkText}
-              </span>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        document.getElementById('stat-total-conducted').textContent = totalCond;
-        const overallPct = totalCond > 0 ? ((totalAtt / totalCond) * 100).toFixed(1) : "0.0";
-        document.getElementById('stat-overall-pct').textContent = `${overallPct}%`;
-        document.getElementById('stat-critical-count').textContent = criticalCourses;
-        document.getElementById('stat-total-bunks').textContent = `${totalBunksAvail} hrs`;
-      } catch (err) {
-        console.error("Attendance fetch error:", err);
-      }
-    }
-
-    async function fetchUnmarked() {
-      try {
-        const res = await fetch('/api/getunmarked');
-        const data = await res.json();
-        const alertBox = document.getElementById('unmarked-alert');
-        const headline = document.getElementById('unmarked-headline');
-        const quickActions = document.getElementById('unmarked-quick-actions');
-        const listContainer = document.getElementById('unmarked-list');
-
-        const dates = Object.keys(data.unmarked || {});
-        if (dates.length === 0) {
-          alertBox.classList.add('hidden');
-          currentEarliestDate = null;
-          return;
         }
 
-        alertBox.classList.remove('hidden');
-        currentEarliestDate = dates[0];
-        const totalPeriods = Object.values(data.unmarked).reduce((acc, curr) => acc + curr.length, 0);
-        headline.textContent = `${dates.length} Days (${totalPeriods} Periods) Awaiting Review`;
-
-        quickActions.innerHTML = `
-          <button onclick="reconcile('${currentEarliestDate}', 'allpresent')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs transition">
-            Mark Present (${currentEarliestDate})
-          </button>
-          <button onclick="reconcile('${currentEarliestDate}', 'allabsent')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-semibold text-xs transition">
-            Mark Absent
-          </button>
+        cell.className = `h-16 p-1.5 rounded-xl border flex flex-col justify-between transition-all ${bgStyle}`;
+        cell.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-xs">${d}</span>
+            ${statusBadge}
+          </div>
+          <div class="text-[9px] text-slate-500 truncate">${dateStr === '2026-10-19' ? '📍 Anchor' : ''}</div>
         `;
-
-        listContainer.innerHTML = '';
-        dates.forEach(d => {
-          const periods = data.unmarked[d];
-          const div = document.createElement('div');
-          div.className = "p-2.5 rounded-lg bg-slate-950/60 border border-amber-500/10 flex items-center justify-between text-xs";
-          const tags = periods.map(p => `P${p.slot}: ${p.subject.substring(0, 8)}`).join(', ');
-
-          div.innerHTML = `
-            <div>
-              <span class="font-mono font-bold text-amber-300">${d}</span>
-              <span class="text-slate-400 ml-2">(${periods.length} hrs: ${tags})</span>
-            </div>
-            <div class="flex gap-2">
-              <button onclick="reconcile('${d}', 'allpresent')" class="px-2 py-1 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded font-medium text-[11px]">Present</button>
-              <button onclick="reconcile('${d}', 'allabsent')" class="px-2 py-1 bg-rose-600/80 hover:bg-rose-600 text-white rounded font-medium text-[11px]">Absent</button>
-            </div>
-          `;
-          listContainer.appendChild(div);
-        });
-      } catch (err) {
-        console.error("Unmarked fetch error:", err);
+        grid.appendChild(cell);
       }
     }
 
-    async function reconcile(dateStr, action) {
+    function showDayDetails(dateStr, dayData) {
+      const title = document.getElementById('detail-date-title');
+      const badge = document.getElementById('detail-date-badge');
+      const container = document.getElementById('detail-periods-list');
+
+      title.textContent = `${dateStr} (${dayData ? dayData.day.toUpperCase() : 'NO RECORD'})`;
+      container.innerHTML = '';
+
+      if (!dayData) {
+        badge.textContent = "Out of Bounds";
+        container.innerHTML = `<span class="text-slate-500 italic">No schedule mapped for this date.</span>`;
+        return;
+      }
+
+      badge.textContent = dayData.status.toUpperCase();
+      badge.className = `text-[10px] font-mono px-2 py-0.5 rounded ${
+        dayData.status === 'working' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+      }`;
+
+      if (dayData.status === "holiday") {
+        container.innerHTML = `<span class="text-rose-400">Non-working Day: <strong>${dayData.reason || 'Holiday'}</strong></span>`;
+        return;
+      }
+
+      (dayData.periods || []).forEach(p => {
+        const pill = document.createElement('div');
+        pill.className = "px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[11px] font-mono flex items-center gap-1.5";
+        pill.innerHTML = `
+          <span class="text-slate-400">P${p.slot}:</span>
+          <span class="font-semibold text-slate-200">${p.subject}</span>
+          <span class="text-[9px] text-cyan-400">(${p.attendance})</span>
+        `;
+        container.appendChild(pill);
+      });
+    }
+
+    // --- 2. Chatbot Pipeline ---
+    async function handleChatSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const message = input.value.trim();
+      if (!message) return;
+
+      appendChatMessage("user", message);
+      input.value = '';
+
+      const loadingId = appendLoadingIndicator();
+
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: message, sessionid: sessionId })
+        });
+        const data = await res.json();
+        removeLoadingIndicator(loadingId);
+
+        if (res.ok) {
+          appendChatMessage("assistant", data.text, data.widget);
+        } else {
+          appendChatMessage("assistant", data.detail || "Sorry, I ran into an error processing your request.");
+        }
+      } catch (err) {
+        removeLoadingIndicator(loadingId);
+        appendChatMessage("assistant", "Network error. Please make sure the server is active.");
+      }
+    }
+
+    function sendQuickPrompt(promptText) {
+      document.getElementById('chat-input').value = promptText;
+      document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+    }
+
+    function appendChatMessage(sender, rawText, widget = null) {
+      const container = document.getElementById('chat-messages');
+      const msgDiv = document.createElement('div');
+
+      const cleanText = parseResponseText(rawText);
+
+      if (sender === "user") {
+        msgDiv.className = "flex justify-end";
+        msgDiv.innerHTML = `
+          <div class="bg-cyan-600 text-white p-3 rounded-2xl rounded-tr-sm max-w-[85%] leading-relaxed shadow-sm font-medium">
+            ${cleanText}
+          </div>
+        `;
+      } else {
+        msgDiv.className = "flex gap-2.5 items-start";
+        let widgetHtml = "";
+
+        // Unmarked Lag Reconciliation Interactive Widget
+        if (widget && widget.type === "unmarked_reconciliation") {
+          widgetHtml = renderUnmarkedWidget(widget.unmarked);
+        }
+
+        msgDiv.innerHTML = `
+          <div class="w-6 h-6 rounded-lg bg-cyan-600 flex items-center justify-center text-white shrink-0 mt-0.5">
+            <i class="ph-bold ph-robot text-sm"></i>
+          </div>
+          <div class="bg-slate-800/80 text-slate-200 p-3 rounded-2xl rounded-tl-sm max-w-[90%] leading-relaxed shadow-sm space-y-3">
+            <div class="space-y-1">${formatMarkdown(cleanText)}</div>
+            ${widgetHtml}
+          </div>
+        `;
+      }
+
+      container.appendChild(msgDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function renderUnmarkedWidget(unmarkedData) {
+      const dates = Object.keys(unmarkedData || {});
+      if (dates.length === 0) return "";
+
+      let itemsHtml = "";
+      dates.forEach(d => {
+        const periods = unmarkedData[d];
+        const tags = periods.map(p => `P${p.slot}: ${p.subject.substring(0, 7)}`).join(', ');
+
+        itemsHtml += `
+          <div id="unmarked-card-${d}" class="p-2.5 rounded-xl bg-slate-950/80 border border-amber-500/30 flex flex-col gap-2">
+            <div class="flex justify-between items-center text-[11px]">
+              <span class="font-mono font-bold text-amber-300">📅 ${d}</span>
+              <span class="text-slate-400">(${periods.length} periods: ${tags})</span>
+            </div>
+            <div class="flex items-center gap-2 pt-1">
+              <button onclick="reconcileDateInline('${d}', 'allpresent')" class="flex-1 py-1 rounded bg-emerald-600/90 hover:bg-emerald-500 text-white font-semibold text-[11px] transition">
+                Mark Present
+              </button>
+              <button onclick="reconcileDateInline('${d}', 'absent')" class="flex-1 py-1 rounded bg-rose-600/90 hover:bg-rose-500 text-white font-semibold text-[11px] transition">
+                Mark Absent
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      return `
+        <div class="mt-2 space-y-2 border-t border-slate-700/60 pt-2.5">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+            <i class="ph-bold ph-lightning"></i> Action Required: Quick Reconcile
+          </div>
+          ${itemsHtml}
+        </div>
+      `;
+    }
+
+    async function reconcileDateInline(dateStr, action) {
       try {
         const res = await fetch('/api/markunmarked', {
           method: 'POST',
@@ -350,70 +464,61 @@
         });
         const data = await res.json();
         if (res.ok) {
-          showToast(`Reconciled ${dateStr} as ${action === 'allpresent' ? 'Present' : 'Absent'}`);
-          refreshDashboard();
+          showToast(`Marked ${dateStr} as ${action === 'allpresent' ? 'Present' : 'Absent'}!`);
+          const card = document.getElementById(`unmarked-card-${dateStr}`);
+          if (card) {
+            card.innerHTML = `
+              <div class="flex justify-between items-center text-[11px] text-emerald-400 font-mono py-1">
+                <span>✓ ${dateStr} successfully marked as ${action === 'allpresent' ? 'PRESENT' : 'ABSENT'}</span>
+              </div>
+            `;
+          }
+          loadCalendar();
         } else {
-          showToast(data.detail || "Failed to reconcile.", true);
+          showToast(data.detail || "Failed to mark.", true);
         }
       } catch (err) {
-        showToast("Error updating attendance override.", true);
+        showToast("Error updating attendance status.", true);
       }
     }
 
-    async function runSimulation() {
-      const dt = document.getElementById('sim-date').value;
-      const slotsRaw = document.getElementById('sim-slots').value.trim();
-
-      if (!dt) {
-        alert("Please select a date to simulate.");
-        return;
-      }
-
-      const slots = slotsRaw
-        ? slotsRaw.split(',').map(s => parseInt(s.trim())).filter(s => !isNaN(s))
-        : null;
-
-      try {
-        const res = await fetch('/api/simulate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ date: dt, slots: slots })
-        });
-        const data = await res.json();
-        const card = document.getElementById('sim-results-card');
-        const list = document.getElementById('sim-output-list');
-        list.innerHTML = '';
-        card.classList.remove('hidden');
-
-        if (!data.results || data.results.length === 0) {
-          list.innerHTML = `<p class="text-xs text-amber-400">No scheduled periods found for ${dt}.</p>`;
-          return;
-        }
-
-        data.results.forEach(r => {
-          const item = document.createElement('div');
-          item.className = "p-2 rounded bg-slate-950 border border-slate-800 text-xs flex justify-between items-center";
-          const badge = r.below75
-            ? `<span class="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-400 font-bold ml-1 text-[10px]">CRITICAL</span>`
-            : '';
-
-          item.innerHTML = `
-            <div>
-              <span class="font-medium text-slate-200 block">${r.subject}</span>
-              <span class="text-[10px] text-slate-500">Missed ${r.cuthours} hr(s)</span>
-            </div>
-            <div class="text-right font-mono">
-              <div>${r.currentpercentage}% &rarr; <span class="${r.below75 ? 'text-rose-400 font-bold' : 'text-amber-400'}">${r.newpercentage}%</span></div>
-              <span class="text-[10px] text-rose-400">${r.drop}% drop ${badge}</span>
-            </div>
-          `;
-          listContainer.appendChild(item);
-        });
-      } catch (err) {
-        showToast("Failed to run bunk simulation.", true);
-      }
+    function appendLoadingIndicator() {
+      const id = "loading_" + Date.now();
+      const container = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.id = id;
+      div.className = "flex gap-2.5 items-center text-slate-400 text-xs italic";
+      div.innerHTML = `
+        <div class="w-6 h-6 rounded-lg bg-cyan-600 flex items-center justify-center text-white shrink-0">
+          <i class="ph-bold ph-robot text-sm"></i>
+        </div>
+        <span>Linwise is checking calculations...</span>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return id;
     }
 
+    function removeLoadingIndicator(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
+    function clearChatHistory() {
+      const container = document.getElementById('chat-messages');
+      container.innerHTML = `
+        <div class="flex gap-2.5 items-start">
+          <div class="w-6 h-6 rounded-lg bg-cyan-600 flex items-center justify-center text-white shrink-0 mt-0.5">
+            <i class="ph-bold ph-robot text-sm"></i>
+          </div>
+          <div class="bg-slate-800/80 text-slate-200 p-3 rounded-2xl rounded-tl-sm max-w-[85%] leading-relaxed shadow-sm">
+            Chat cleared. How can I assist you with your attendance today?
+          </div>
+        </div>
+      `;
+    }
+
+    // --- 3. Portal Sync ---
     async function triggerPortalSync() {
       const icon = document.getElementById('sync-icon');
       icon.classList.add('animate-spin');
@@ -422,7 +527,7 @@
         const data = await res.json();
         if (res.ok) {
           showToast(data.message || "Sync complete!");
-          refreshDashboard();
+          loadCalendar();
         } else {
           showToast(data.detail || "Sync failed.", true);
         }
@@ -433,11 +538,8 @@
       }
     }
 
-    // Default simulation input to locked evaluation date
-    document.getElementById('sim-date').value = "2026-10-20";
-
-    // Initial load
-    refreshDashboard();
+    // Initial Load
+    loadCalendar();
   </script>
 </body>
 </html>
