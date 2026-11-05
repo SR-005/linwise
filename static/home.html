@@ -1,255 +1,407 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<html lang="en" class="h-full bg-[#121316] text-slate-100 selection:bg-purple-600/30 selection:text-purple-200">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Linwise — KTU Attendance Radar & AI Assistant</title>
+  <title>Linwise — KTU Attendance Radar</title>
+  
+  <!-- Agrandir Typography CDN -->
+  <link href="https://fonts.cdnfonts.com/css/agrandir" rel="stylesheet">
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Agrandir', 'sans-serif'],
+            mono: ['Agrandir Wide', 'Agrandir', 'sans-serif'],
+            grand: ['Agrandir Grand Heavy', 'Agrandir Grand', 'Agrandir', 'sans-serif'],
+            wide: ['Agrandir Wide', 'Agrandir', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
   <style>
-    /* Custom clean scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #020617; }
-    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
-    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    /* Strict global Agrandir font locking across all elements */
+    *, html, body, button, input, select, textarea, table, th, td, code, pre {
+      font-family: 'Agrandir', sans-serif !important;
+    }
+    
+    .font-grand {
+      font-family: 'Agrandir Grand Heavy', 'Agrandir Grand', 'Agrandir', sans-serif !important;
+      letter-spacing: -0.02em;
+    }
+    
+    .font-wide {
+      font-family: 'Agrandir Wide', 'Agrandir', sans-serif !important;
+      letter-spacing: 0.02em;
+    }
+
+    /* Custom refined scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #121316; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+
+    /* Vertical text for side calendar dock */
+    .vertical-writing-lr {
+      writing-mode: vertical-lr;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+    }
   </style>
 </head>
-<body class="h-full flex flex-col font-sans antialiased selection:bg-cyan-500/20 selection:text-cyan-300">
-
-  <!-- Header -->
-  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40 px-6 py-3.5">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/10">
-          <i class="ph-bold ph-graduation-cap text-2xl text-white"></i>
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-base font-bold tracking-tight text-white">Linwise Workspace</h1>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              AI Copilot Active
-            </span>
-          </div>
-          <p class="text-xs text-slate-400 font-mono">
-            Student ID: <span class="text-cyan-400 font-semibold">P012CSOM23</span>
-          </p>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <button onclick="triggerPortalSync()" id="sync-portal-btn" class="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 text-xs font-semibold text-slate-200 transition shadow-sm">
-          <i class="ph ph-arrows-clockwise text-base" id="sync-icon"></i>
-          <span>Sync Portal</span>
-        </button>
-      </div>
-    </div>
-  </header>
+<body class="h-full flex overflow-hidden antialiased bg-[#121316]">
 
   <!-- Notification Toast -->
-  <div id="toast" class="hidden fixed bottom-6 left-6 z-50 px-4 py-3 rounded-xl border text-xs font-medium shadow-2xl transition"></div>
+  <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl border text-xs font-medium shadow-2xl transition font-wide"></div>
 
-  <!-- Workspace Grid -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
-
-    <!-- LEFT: Visual Academic Calendar (7 cols) -->
-    <section class="lg:col-span-7 flex flex-col bg-slate-900/40 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4 overflow-hidden">
-      
-      <!-- Top Navigation Tabs -->
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
-        <div class="flex items-center gap-2">
-          <button onclick="switchTab('calendar')" id="tab-btn-calendar" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-cyan-600 text-white shadow-sm flex items-center gap-1.5">
-            <i class="ph-bold ph-calendar-blank"></i> Calendar
-          </button>
-          <button onclick="switchTab('timetable')" id="tab-btn-timetable" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
-            <i class="ph-bold ph-table"></i> Weekly Timetable
-          </button>
+  <!-- ================= LEFT SIDEBAR ================= -->
+  <aside class="w-48 bg-black border-r border-[#27272a]/80 flex flex-col justify-between py-6 px-3 shrink-0 z-30 select-none">
+    <div class="space-y-8">
+      <!-- Linwise Logo -->
+      <div class="px-3 flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center font-grand text-white text-lg tracking-tighter shadow-md shadow-purple-900/40">
+          L
         </div>
-
-        <div id="calendar-month-controls" class="flex items-center gap-2">
-          <span id="calendar-month-label" class="text-xs font-bold text-slate-200"></span>
-          <div class="flex items-center gap-1">
-            <button onclick="changeMonth(-1)" class="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">
-              <i class="ph-bold ph-caret-left text-xs"></i>
-            </button>
-            <button onclick="changeMonth(1)" class="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">
-              <i class="ph-bold ph-caret-right text-xs"></i>
-            </button>
-          </div>
-        </div>
+        <span class="text-sm font-grand font-bold tracking-tight text-white">Linwise</span>
       </div>
 
-      <!-- CALENDAR TAB CONTAINER -->
-      <div id="tab-calendar-container" class="flex flex-col flex-1 space-y-4 overflow-hidden">
-        <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div>
-          <div class="text-amber-400">Sat</div>
-          <div class="text-rose-400">Sun</div>
-        </div>
-
-        <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 flex-1 overflow-y-auto pr-1"></div>
-
-        <div id="day-details-panel" class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-200" id="detail-date-title">Select a date</span>
-            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400" id="detail-date-badge">--</span>
-          </div>
-          <div id="detail-periods-list" class="flex flex-wrap gap-1.5 text-[11px]">
-            <span class="text-slate-500 italic">Click a working day above to view periods.</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- TIMETABLE TAB CONTAINER -->
-      <div id="tab-timetable-container" class="hidden flex-1 overflow-y-auto space-y-3 pr-1">
-        <p class="text-xs text-slate-400">Standard period schedule mapped from Monday to Saturday:</p>
-        <div class="overflow-x-auto border border-slate-800 rounded-xl bg-slate-950/60">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-900 border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400">
-              <tr>
-                <th class="py-2.5 px-3">Day</th>
-                <th class="py-2.5 px-2 text-center">P1</th>
-                <th class="py-2.5 px-2 text-center">P2</th>
-                <th class="py-2.5 px-2 text-center">P3</th>
-                <th class="py-2.5 px-2 text-center">P4</th>
-                <th class="py-2.5 px-2 text-center">P5</th>
-                <th class="py-2.5 px-2 text-center">P6</th>
-              </tr>
-            </thead>
-            <tbody id="timetable-tbody" class="divide-y divide-slate-800/60 font-mono">
-              <tr><td colspan="7" class="p-6 text-center text-slate-500 italic">Loading timetable...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- RIGHT: AI Chatbot (5 cols) -->
-    <section class="lg:col-span-5 flex flex-col bg-slate-900/50 border border-slate-800 rounded-2xl shadow-xl overflow-hidden h-[680px]">
-      
-      <!-- Chat Header -->
-      <div class="px-4 py-3 border-b border-slate-800/80 bg-slate-900/80 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></div>
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-200">Linwise AI Copilot</span>
-        </div>
-        <button onclick="clearChatHistory()" class="text-[11px] text-slate-400 hover:text-slate-200 transition">
-          Clear Chat
+      <!-- Navigation Links -->
+      <nav class="space-y-1.5 font-wide">
+        <button onclick="switchView('chat')" id="nav-chat" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition bg-[#222328] text-white shadow-sm">
+          <i class="ph-bold ph-chat-circle-dots text-sm"></i>
+          <span>Chat</span>
         </button>
+
+        <button onclick="switchView('timetable')" id="nav-timetable" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition text-zinc-400 hover:text-white hover:bg-zinc-900/80">
+          <i class="ph-bold ph-table text-sm"></i>
+          <span>Timetable</span>
+        </button>
+
+        <button onclick="switchView('profile')" id="nav-profile" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition text-zinc-400 hover:text-white hover:bg-zinc-900/80">
+          <i class="ph-bold ph-user text-sm"></i>
+          <span>Profile</span>
+        </button>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN VIEWPORT ================= -->
+  <main class="flex-1 flex flex-col relative overflow-hidden bg-[#18191d]">
+
+    <!-- ----------------- VIEW 1: CHAT INTERFACE ----------------- -->
+    <div id="view-chat" class="flex-1 flex flex-col h-full overflow-hidden">
+      <!-- Messages Stream -->
+      <div id="chat-messages" class="flex-1 overflow-y-auto px-6 lg:px-16 py-8 space-y-4 text-xs font-wide">
+        <!-- Messages will be appended dynamically -->
       </div>
 
-      <!-- Quick Prompt Pills -->
-      <div class="p-2.5 bg-slate-950/50 border-b border-slate-800/60 flex items-center gap-1.5 overflow-x-auto text-[11px]">
-        <button onclick="sendQuickPrompt('What is my current attendance and safe bunks?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/50 transition">
-          📊 Attendance Summary
-        </button>
-        <button onclick="sendQuickPrompt('Are there any unmarked portal dates lagging?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/50 transition">
-          ⚠️ Check Lag Dates
-        </button>
-        <button onclick="sendQuickPrompt('Can I bunk classes on 2026-10-20?')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/50 transition">
-          ⚡ Bunk 2026-10-20
-        </button>
-      </div>
-
-      <!-- Messages Thread -->
-      <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3.5 text-xs">
-        <!-- Initial Bot Greeting -->
-        <div class="flex gap-2.5 items-start">
-          <div class="w-6 h-6 rounded-lg bg-cyan-600 flex items-center justify-center text-white shrink-0 mt-0.5">
-            <i class="ph-bold ph-robot text-sm"></i>
-          </div>
-          <div class="bg-slate-800/80 text-slate-200 p-3 rounded-2xl rounded-tl-sm max-w-[85%] leading-relaxed shadow-sm">
-            Hello! I am your Linwise attendance companion. Ask me anything about your current subject percentages, safe bunks, or unposted classes.
-          </div>
-        </div>
-      </div>
-
-      <!-- Input Bar -->
-      <div class="p-3 border-t border-slate-800/80 bg-slate-950/60">
-        <form id="chat-form" onsubmit="handleChatSubmit(event)" class="flex items-center gap-2">
+      <!-- Bottom Chat Input Bar -->
+      <div class="p-4 lg:p-6 bg-[#151619]/90 border-t border-zinc-800/80">
+        <form id="chat-form" onsubmit="handleChatSubmit(event)" class="max-w-4xl mx-auto flex items-center bg-[#24252a] rounded-2xl px-4 py-2.5 border border-zinc-700/60 focus-within:border-purple-500 transition shadow-inner font-wide">
           <input 
             type="text" 
             id="chat-input" 
-            placeholder="Ask about attendance, bunks, or lag dates..." 
-            class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition"
+            placeholder="Ask Linwise..." 
+            class="flex-1 bg-transparent text-xs text-white placeholder-zinc-500 focus:outline-none"
             autocomplete="off"
           />
           <button 
             type="submit" 
-            id="chat-send-btn"
-            class="px-3.5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold transition flex items-center justify-center shadow-lg shadow-cyan-950/40"
+            id="chat-send-btn" 
+            class="w-7 h-7 rounded-full bg-white hover:bg-zinc-200 text-black flex items-center justify-center transition shadow shrink-0"
           >
-            <i class="ph-bold ph-paper-plane-right text-sm"></i>
+            <i class="ph-bold ph-arrow-up text-xs"></i>
           </button>
         </form>
       </div>
+    </div>
 
-    </section>
+    <!-- ----------------- VIEW 2: TIMETABLE ----------------- -->
+    <div id="view-timetable" class="hidden flex-1 overflow-y-auto p-6 lg:p-10 flex flex-col items-center justify-start">
+      <div class="w-full max-w-7xl bg-[#1c1d22] border border-zinc-800 rounded-3xl p-8 lg:p-10 shadow-2xl space-y-8">
+        
+        <!-- Timetable Header -->
+        <div class="flex items-center justify-between border-b border-zinc-800/90 pb-5">
+          <h2 class="text-3xl font-grand font-extrabold text-amber-400 tracking-wider">CSE B</h2>
+          <span class="text-3xl font-grand font-extrabold text-amber-400">S7</span>
+        </div>
+
+        <!-- Timetable Grid Container -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-center border-collapse font-wide">
+            <thead>
+              <tr class="text-zinc-400 text-sm font-semibold border-b border-zinc-800">
+                <th class="py-4 px-6 text-left font-grand w-36"></th>
+                <th class="py-4 px-4 border-l border-zinc-800/80">Period 1</th>
+                <th class="py-4 px-4 border-l border-zinc-800/80">Period 2</th>
+                <th class="py-4 px-4 border-l border-zinc-800/80">Period 3</th>
+                <th class="py-4 px-4 border-l border-zinc-800/80">Period 4</th>
+                <th class="py-4 px-4 border-l border-zinc-800/80">Period 5</th>
+                <th class="py-4 px-4 border-l border-zinc-800/80">Period 6</th>
+              </tr>
+            </thead>
+            <tbody id="timetable-tbody" class="divide-y divide-zinc-800/80 text-sm font-wide">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Bottom Timetable Action -->
+        <div class="pt-8 border-t border-zinc-800/80 flex flex-col items-center text-center space-y-4 font-wide">
+          <p class="text-xs sm:text-sm text-zinc-400 max-w-xl">
+            If this timetable doesn't match your current schedule, you can either pick a preset or upload an entirely new one.
+          </p>
+          <div class="flex items-center gap-5">
+            <button class="px-7 py-3 rounded-xl bg-white hover:bg-zinc-200 text-black font-grand font-bold text-xs sm:text-sm transition shadow-md hover:scale-[1.02] active:scale-[0.98]">
+              Upload Timetable
+            </button>
+            <span class="text-xs sm:text-sm font-semibold text-zinc-300 font-grand">S7 CSE B</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ----------------- VIEW 3: PROFILE (WITH SETTINGS & SYNC) ----------------- -->
+    <div id="view-profile" class="hidden flex-1 overflow-y-auto p-8 flex flex-col items-center">
+      <div class="w-full max-w-5xl space-y-6">
+        
+        <!-- Profile Identity Card -->
+        <div class="bg-[#1c1d22] border border-zinc-800 rounded-2xl p-7 shadow-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-grand shadow-lg shadow-purple-900/30">
+              <i class="ph-bold ph-user"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-lg font-grand font-bold text-white">Student Account</h2>
+                <span class="px-2 py-0.5 rounded text-[10px] font-wide bg-purple-500/10 text-purple-300 border border-purple-500/20">Active</span>
+              </div>
+              <p class="text-xs text-zinc-400 font-wide mt-0.5">
+                ID: <span class="text-purple-300 font-grand font-semibold text-sm">P012CSOM23</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Linways Sync Button -->
+          <button onclick="triggerPortalSync()" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-grand font-semibold text-xs transition shadow-lg shadow-purple-950/40">
+            <i class="ph ph-arrows-clockwise text-base" id="sync-icon"></i>
+            <span>Sync Linways Portal</span>
+          </button>
+        </div>
+
+        <!-- System & Simulation Tiles -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Simulation Lock Tile -->
+          <div class="p-6 bg-[#1c1d22] border border-zinc-800 rounded-2xl shadow-xl flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center gap-2 text-purple-400 text-xs font-grand font-bold uppercase tracking-wider mb-1">
+                <i class="ph-bold ph-lock-key"></i> Active Anchor Date
+              </div>
+              <h3 class="text-base font-grand font-bold text-white">Simulation Lock</h3>
+              <p class="text-xs text-zinc-400 mt-1 leading-relaxed font-wide">
+                Dates on or after this anchor are treated as upcoming classes for safe bunk and runway calculations.
+              </p>
+            </div>
+            <div class="pt-3 border-t border-zinc-800/80 flex items-center justify-between">
+              <span class="text-xs text-zinc-500 font-wide">Locked Date:</span>
+              <span class="font-wide text-purple-300 font-bold bg-purple-950/40 px-3 py-1 rounded-lg border border-purple-800/40 text-xs">
+                2026-10-19
+              </span>
+            </div>
+          </div>
+
+          <!-- KTU Threshold Tile -->
+          <div class="p-6 bg-[#1c1d22] border border-zinc-800 rounded-2xl shadow-xl flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center gap-2 text-emerald-400 text-xs font-grand font-bold uppercase tracking-wider mb-1">
+                <i class="ph-bold ph-shield-check"></i> KTU Criteria
+              </div>
+              <h3 class="text-base font-grand font-bold text-white">Minimum Attendance</h3>
+              <p class="text-xs text-zinc-400 mt-1 leading-relaxed font-wide">
+                Autonomous KTU criterion for semester exam eligibility without condonation fine.
+              </p>
+            </div>
+            <div class="pt-3 border-t border-zinc-800/80 flex items-center justify-between">
+              <span class="text-xs text-zinc-500 font-wide">Threshold:</span>
+              <span class="font-wide text-emerald-400 font-bold bg-emerald-950/40 px-3 py-1 rounded-lg border border-emerald-800/40 text-xs">
+                75.0%
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= RIGHT SLIDING CALENDAR DRAWER ================= -->
+    <div id="calendar-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[700px] lg:w-[780px] bg-[#16171b] border-l border-zinc-800 shadow-2xl z-40 transform translate-x-full transition-transform duration-300 flex flex-col">
+      
+      <!-- Drawer Header -->
+      <div class="px-6 py-4 border-b border-zinc-800/80 flex items-center justify-between bg-[#121316]">
+        <div class="flex items-center gap-4">
+          <span class="text-xl font-grand font-bold text-white tracking-wide" id="cal-month-title">October</span>
+          <div class="flex items-center gap-1.5 text-zinc-400">
+            <button onclick="changeMonth(-1)" class="p-1 hover:text-white transition">
+              <i class="ph-bold ph-caret-left text-base"></i>
+            </button>
+            <button onclick="changeMonth(1)" class="p-1 hover:text-white transition">
+              <i class="ph-bold ph-caret-right text-base"></i>
+            </button>
+          </div>
+        </div>
+        <button onclick="toggleCalendarDrawer(false)" class="text-zinc-400 hover:text-white transition p-1.5 rounded-lg hover:bg-zinc-800">
+          <i class="ph-bold ph-x text-base"></i>
+        </button>
+      </div>
+
+      <!-- Calendar Content Area -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-5">
+        
+        <!-- Days of Week Header -->
+        <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-zinc-400 font-wide">
+          <div>MON</div>
+          <div>TUE</div>
+          <div>WED</div>
+          <div>THU</div>
+          <div>FRI</div>
+          <div>SAT</div>
+          <div class="text-rose-500 font-extrabold">SUN</div>
+        </div>
+
+        <!-- Expanded Calendar Month Grid -->
+        <div id="calendar-grid" class="grid grid-cols-7 gap-2.5 font-wide">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Legend Strip Below the Dates -->
+        <div class="flex items-center justify-between text-xs text-zinc-300 py-2.5 px-4 bg-zinc-950/70 rounded-xl border border-zinc-800/80 font-wide">
+          <span class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-[4px] bg-emerald-400 shrink-0"></span> Present
+          </span>
+          <span class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-[4px] bg-amber-400 shrink-0"></span> Partial
+          </span>
+          <span class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-[4px] bg-rose-500 shrink-0"></span> Absent
+          </span>
+          <span class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-[4px] bg-white shrink-0"></span> Holiday / Unmarked
+          </span>
+        </div>
+
+        <!-- Selected Date Period Inspector Drawer -->
+        <div id="date-details-panel" class="hidden p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3 font-wide">
+          <div class="flex items-center justify-between border-b border-zinc-800/80 pb-2.5">
+            <span class="font-grand font-bold text-sm text-white" id="inspected-date-label">--</span>
+            <span class="text-[10px] font-wide px-2.5 py-0.5 rounded" id="inspected-date-badge">--</span>
+          </div>
+          <div id="inspected-periods-container" class="space-y-2">
+            <!-- Periods populated dynamically -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right Edge Calendar Dock Button -->
+    <button 
+      onclick="toggleCalendarDrawer()" 
+      class="fixed right-0 top-1/2 -translate-y-1/2 bg-black hover:bg-zinc-900 border-l border-y border-zinc-800 text-zinc-300 hover:text-white px-2 py-4 rounded-l-xl z-30 transition shadow-lg flex items-center justify-center gap-1 text-[11px] font-grand font-semibold tracking-wider uppercase select-none"
+    >
+      <span class="vertical-writing-lr">Calendar</span>
+      <i class="ph-bold ph-caret-left text-xs"></i>
+    </button>
 
   </main>
 
-
-  <!-- Client JavaScript -->
+  <!-- ================= CLIENT JAVASCRIPT ================= -->
   <script>
     let calendarStore = {};
     let timetableStore = {};
-    let activeMonthDate = new Date(2026, 9, 1); // Defaults to October 2026 (Month index 9)
+    let activeMonthDate = new Date(2026, 9, 1); // October 2026 default
+    const anchorDateStr = "2026-10-19";
+    let selectedDateStr = null;
     const sessionId = "session_" + Math.random().toString(36).substring(2, 9);
 
     // --- Toast Notifications ---
     function showToast(msg, isError = false) {
       const toast = document.getElementById('toast');
       toast.textContent = msg;
-      toast.className = `fixed bottom-6 left-6 z-50 px-4 py-3 rounded-xl border text-xs font-medium shadow-2xl transition ${
+      toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl border text-xs font-wide font-medium shadow-2xl transition ${
         isError ? 'bg-rose-950/90 border-rose-500/40 text-rose-300' : 'bg-emerald-950/90 border-emerald-500/40 text-emerald-300'
       }`;
       toast.classList.remove('hidden');
       setTimeout(() => toast.classList.add('hidden'), 4000);
     }
 
-    // --- Tab Switching (Calendar vs Timetable) ---
-    function switchTab(tab) {
-      const calContainer = document.getElementById('tab-calendar-container');
-      const ttContainer = document.getElementById('tab-timetable-container');
-      const calBtn = document.getElementById('tab-btn-calendar');
-      const ttBtn = document.getElementById('tab-btn-timetable');
-      const calControls = document.getElementById('calendar-month-controls');
+    // --- View Navigation ---
+    function switchView(viewName) {
+      const views = ['chat', 'timetable', 'profile'];
+      views.forEach(v => {
+        document.getElementById(`view-${v}`).classList.add('hidden');
+        const nav = document.getElementById(`nav-${v}`);
+        nav.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-wide font-semibold transition text-zinc-400 hover:text-white hover:bg-zinc-900/80";
+      });
 
-      if (tab === 'calendar') {
-        calContainer.classList.remove('hidden');
-        ttContainer.classList.add('hidden');
-        calControls.classList.remove('hidden');
-        calBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-cyan-600 text-white shadow-sm flex items-center gap-1.5";
-        ttBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center gap-1.5";
-      } else {
-        calContainer.classList.add('hidden');
-        ttContainer.classList.remove('hidden');
-        calControls.classList.add('hidden');
-        ttBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-cyan-600 text-white shadow-sm flex items-center gap-1.5";
-        calBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center gap-1.5";
+      document.getElementById(`view-${viewName}`).classList.remove('hidden');
+      const activeNav = document.getElementById(`nav-${viewName}`);
+      activeNav.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-wide font-semibold transition bg-[#222328] text-white shadow-sm";
+
+      if (viewName === 'timetable') {
         loadTimetable();
       }
     }
 
-    // --- Response Cleaning & Formatting ---
+    // --- Calendar Drawer Toggle ---
+    function toggleCalendarDrawer(forceState = null) {
+      const drawer = document.getElementById('calendar-drawer');
+      const isClosed = drawer.classList.contains('translate-x-full');
+      if (forceState === true || (forceState === null && isClosed)) {
+        drawer.classList.remove('translate-x-full');
+        renderCalendar();
+      } else {
+        drawer.classList.add('translate-x-full');
+      }
+    }
+
+    // --- Subject Name Formatting Helper ---
+    function formatSubjectName(subject) {
+      if (!subject) return 'Free';
+      if (typeof subject === 'object') {
+        if (subject.display) return subject.display;
+        if (subject.slug) subject = subject.slug;
+      }
+      const str = String(subject).trim();
+      if (!str || str.toLowerCase() === 'free') return 'Free';
+
+      let clean = str.split('__')[0];
+      clean = clean.replace(/[_-]+/g, ' ').trim();
+
+      return clean.replace(/\w\S*/g, (txt) =>
+        txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+      );
+    }
+
+    // --- Response Sanitization ---
     function parseResponseText(raw) {
       if (!raw) return '';
-
-      // If response is already an array of block objects
       if (Array.isArray(raw)) {
         const textPart = raw.find(b => b && (b.text || b.type === 'text'));
         if (textPart && textPart.text) return textPart.text;
       }
-
-      // If response is a dict object
       if (typeof raw === 'object') {
         if (raw.text) return raw.text;
         return JSON.stringify(raw);
       }
-
       let text = String(raw).trim();
-
-      // Check for Python stringified dict / list representation with 'extras', 'signature', etc.
       if (text.startsWith("[{'") || text.startsWith('[{"') || text.startsWith("{'text'") || text.startsWith('{"text"')) {
         const match = text.match(/['"]text['"]\s*:\s*(['"])((?:\\.|(?!\1)[\s\S])*)\1/);
         if (match && match[2]) {
@@ -259,24 +411,19 @@
             .replace(/\\"/g, '"');
         }
       }
-
       return text;
     }
 
     function formatMarkdown(text) {
       if (!text) return '';
       return text
-        // Bold: **text**
-        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
-        // Inline code / badges: `code`
-        .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700/60 font-mono text-[11px] text-cyan-300">$1</code>')
-        // Bullet points at line start
-        .replace(/^[\*\-]\s+(.*)$/gm, '<li class="ml-3 list-disc text-slate-300">$1</li>')
-        // Newlines to <br>
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-grand font-semibold">$1</strong>')
+        .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-700 font-wide text-[11px] text-purple-300">$1</code>')
+        .replace(/^[\*\-]\s+(.*)$/gm, '<li class="ml-3 list-disc text-zinc-300 font-wide">$1</li>')
         .replace(/\n/g, '<br>');
     }
 
-    // --- 1. Visual Academic Calendar ---
+    // --- Calendar Loading & Color Rules ---
     async function loadCalendar() {
       try {
         const res = await fetch('/api/calendar', { method: 'POST' });
@@ -297,103 +444,129 @@
       const year = activeMonthDate.getFullYear();
       const month = activeMonthDate.getMonth();
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      document.getElementById('calendar-month-label').textContent = `${monthNames[month]} ${year}`;
+      document.getElementById('cal-month-title').textContent = `${monthNames[month]} ${year}`;
 
       const grid = document.getElementById('calendar-grid');
       grid.innerHTML = '';
 
-      const firstDayOfMonth = new Date(year, month, 1);
-      const lastDayOfMonth = new Date(year, month + 1, 0);
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
 
-      // Convert Sunday-first (0) to Monday-first (0)
-      let startingDay = firstDayOfMonth.getDay() - 1;
+      let startingDay = firstDay.getDay() - 1;
       if (startingDay === -1) startingDay = 6;
 
-      // Blank prefix cells
       for (let i = 0; i < startingDay; i++) {
         const blank = document.createElement('div');
-        blank.className = "h-16 rounded-xl bg-slate-950/30 border border-slate-900/40";
+        blank.className = "h-20 sm:h-24 rounded-2xl bg-zinc-900/10 border border-zinc-900/30";
         grid.appendChild(blank);
       }
 
-      for (let d = 1; d <= lastDayOfMonth.getDate(); d++) {
+      for (let d = 1; d <= lastDay.getDate(); d++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const dayData = calendarStore[dateStr];
 
         const cell = document.createElement('div');
-        cell.onclick = () => showDayDetails(dateStr, dayData);
+        cell.onclick = () => inspectDatePeriods(dateStr, dayData);
 
-        let bgStyle = "bg-slate-950/60 border-slate-800/60 hover:border-slate-600";
-        let statusBadge = "";
+        let cellBg = "bg-[#202126] border-zinc-800/80 hover:border-zinc-600";
+        let dateColor = "text-white";
+        let labelText = "";
+
+        const isAnchorToday = (dateStr === anchorDateStr);
+        const isSelected = (dateStr === selectedDateStr);
 
         if (dayData) {
           if (dayData.status === "holiday") {
-            if (dayData.day === "sunday") {
-              bgStyle = "bg-rose-950/20 border-rose-900/30 text-rose-300";
-              statusBadge = `<span class="text-[9px] text-rose-400 font-mono">SUN</span>`;
-            } else if (dayData.reason && dayData.reason.includes("Saturday")) {
-              bgStyle = "bg-amber-950/20 border-amber-900/30 text-amber-300";
-              statusBadge = `<span class="text-[9px] text-amber-400 font-mono">SAT</span>`;
-            } else {
-              bgStyle = "bg-purple-950/20 border-purple-900/30 text-purple-300";
-              statusBadge = `<span class="text-[9px] text-purple-400 truncate font-mono">${(dayData.reason || '').substring(0, 6)}</span>`;
-            }
+            cellBg = "bg-[#251518] border-rose-950/50";
+            dateColor = "text-white";
+            labelText = dayData.reason ? dayData.reason.substring(0, 12) : "Holiday";
           } else if (dayData.status === "working") {
-            bgStyle = "bg-slate-900/80 border-slate-700/50 hover:border-cyan-500 text-slate-200 cursor-pointer";
-            const periodCount = (dayData.periods || []).filter(p => p.subject !== "free").length;
-            statusBadge = `<span class="text-[9px] text-cyan-400 font-mono">${periodCount}h</span>`;
+            const periods = (dayData.periods || []).filter(p => p.subject && p.subject !== 'free');
+            
+            if (periods.length > 0) {
+              const presentCount = periods.filter(p => p.attendance === 'present').length;
+              const absentCount = periods.filter(p => p.attendance === 'absent').length;
+
+              if (presentCount === periods.length) {
+                dateColor = "text-emerald-400";
+              } else if (presentCount > 0 && absentCount > 0) {
+                dateColor = "text-amber-400";
+              } else if (absentCount === periods.length) {
+                dateColor = "text-rose-500";
+              } else {
+                dateColor = "text-white";
+              }
+            }
           }
         }
 
-        cell.className = `h-16 p-1.5 rounded-xl border flex flex-col justify-between transition-all ${bgStyle}`;
+        if (isAnchorToday) {
+          cellBg = "bg-gradient-to-b from-[#e9d5ff] to-[#a855f7] border-purple-300 shadow-xl shadow-purple-950/40";
+          dateColor = "text-black font-extrabold";
+        }
+
+        const borderRing = isSelected ? "ring-2 ring-purple-500 border-purple-400" : "";
+
+        cell.className = `h-20 sm:h-24 p-2 sm:p-2.5 rounded-2xl border flex flex-col justify-between cursor-pointer transition select-none font-wide ${cellBg} ${borderRing}`;
         cell.innerHTML = `
-          <div class="flex justify-between items-center">
-            <span class="font-bold text-xs">${d}</span>
-            ${statusBadge}
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-grand font-bold ${dateColor}">${d}</span>
+            ${isAnchorToday ? '<span class="w-1.5 h-1.5 rounded-full bg-black"></span>' : ''}
           </div>
-          <div class="text-[9px] text-slate-500 truncate">${dateStr === '2026-10-19' ? '📍 Anchor' : ''}</div>
+          <div class="text-[10px] font-wide ${isAnchorToday ? 'text-black font-semibold' : 'text-zinc-500'} truncate leading-tight">${labelText}</div>
         `;
         grid.appendChild(cell);
       }
     }
 
-    function showDayDetails(dateStr, dayData) {
-      const title = document.getElementById('detail-date-title');
-      const badge = document.getElementById('detail-date-badge');
-      const container = document.getElementById('detail-periods-list');
+    function inspectDatePeriods(dateStr, dayData) {
+      selectedDateStr = dateStr;
+      renderCalendar();
 
-      title.textContent = `${dateStr} (${dayData ? dayData.day.toUpperCase() : 'NO RECORD'})`;
+      const panel = document.getElementById('date-details-panel');
+      const label = document.getElementById('inspected-date-label');
+      const badge = document.getElementById('inspected-date-badge');
+      const container = document.getElementById('inspected-periods-container');
+
+      panel.classList.remove('hidden');
+      label.textContent = dateStr;
       container.innerHTML = '';
 
       if (!dayData) {
-        badge.textContent = "Out of Bounds";
-        container.innerHTML = `<span class="text-slate-500 italic">No schedule mapped for this date.</span>`;
+        badge.textContent = "NO RECORD";
+        badge.className = "text-[10px] font-wide px-2.5 py-0.5 rounded bg-zinc-800 text-zinc-400";
+        container.innerHTML = `<span class="text-zinc-500 italic text-xs font-wide">No records available for this date.</span>`;
         return;
       }
 
       badge.textContent = dayData.status.toUpperCase();
-      badge.className = `text-[10px] font-mono px-2 py-0.5 rounded ${
-        dayData.status === 'working' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+      badge.className = `text-[10px] font-wide px-2.5 py-0.5 rounded ${
+        dayData.status === 'working' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
       }`;
 
       if (dayData.status === "holiday") {
-        container.innerHTML = `<span class="text-rose-400">Non-working Day: <strong>${dayData.reason || 'Holiday'}</strong></span>`;
+        container.innerHTML = `<p class="text-xs text-rose-400 py-1 font-wide">Non-working: <strong class="font-grand">${dayData.reason || 'Declared Holiday'}</strong></p>`;
         return;
       }
 
       (dayData.periods || []).forEach(p => {
-        const pill = document.createElement('div');
-        pill.className = "px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[11px] font-mono flex items-center gap-1.5";
-        pill.innerHTML = `
-          <span class="text-slate-400">P${p.slot}:</span>
-          <span class="font-semibold text-slate-200">${p.subject}</span>
-          <span class="text-[9px] text-cyan-400">(${p.attendance})</span>
+        let attColor = "text-zinc-400";
+        if (p.attendance === 'present') attColor = "text-emerald-400 font-bold";
+        if (p.attendance === 'absent') attColor = "text-rose-500 font-bold";
+
+        const formattedSubject = formatSubjectName(p.subject);
+
+        const div = document.createElement('div');
+        div.className = "flex items-center justify-between text-xs p-2 rounded-xl bg-zinc-900/90 border border-zinc-800/80 font-wide";
+        div.innerHTML = `
+          <span>Period ${p.slot}: <strong class="text-white font-grand">${formattedSubject}</strong></span>
+          <span class="${attColor} uppercase text-[11px] font-wide font-bold">${p.attendance}</span>
         `;
-        container.appendChild(pill);
+        container.appendChild(div);
       });
     }
 
-    // --- 2. Weekly Timetable ---
+    // --- Timetable Rendering ---
     async function loadTimetable() {
       try {
         const res = await fetch('/api/timetable');
@@ -412,25 +585,26 @@
       const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
       days.forEach(day => {
-        const periods = timetableStore[day] || ["free", "free", "free", "free", "free", "free"];
+        const periods = timetableStore[day] || ["Free", "Free", "Free", "Free", "Free", "Free"];
         const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-800/20 transition-colors";
-        
-        let slotsHtml = periods.map(p => {
-          const isFree = !p || p === 'free';
-          const style = isFree ? "text-slate-600 italic" : "text-cyan-300 font-semibold";
-          return `<td class="py-2.5 px-2 text-center truncate max-w-[85px] ${style}">${isFree ? 'FREE' : p.substring(0, 8)}</td>`;
+        tr.className = "hover:bg-zinc-900/40 transition-colors font-wide";
+
+        let periodsHtml = periods.map(p => {
+          const displayName = formatSubjectName(p);
+          const isFree = (!displayName || displayName.toLowerCase() === 'free');
+          const style = isFree ? "text-rose-600 font-semibold italic" : "text-zinc-200 font-medium";
+          return `<td class="py-3.5 px-4 border-l border-zinc-800/80 truncate max-w-[130px] ${style}" title="${displayName}">${displayName}</td>`;
         }).join('');
 
         tr.innerHTML = `
-          <td class="py-2.5 px-3 font-sans font-bold text-slate-300 capitalize">${day.substring(0, 3)}</td>
-          ${slotsHtml}
+          <td class="py-3.5 px-4 text-left font-bold font-grand text-emerald-400 capitalize">${day}</td>
+          ${periodsHtml}
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // --- 3. Chatbot Pipeline ---
+    // --- Chatbot Processing ---
     async function handleChatSubmit(e) {
       e.preventDefault();
       const input = document.getElementById('chat-input');
@@ -453,53 +627,43 @@
 
         if (res.ok) {
           appendChatMessage("assistant", data.text, data.widget);
-          // Auto-sync visual components in case the AI modified holidays or timetable periods
           loadCalendar();
-          if (!document.getElementById('tab-timetable-container').classList.contains('hidden')) {
+          const ttView = document.getElementById('view-timetable');
+          if (ttView && !ttView.classList.contains('hidden')) {
             loadTimetable();
           }
         } else {
-          appendChatMessage("assistant", data.detail || "Sorry, I ran into an error processing your request.");
+          appendChatMessage("assistant", data.detail || "I encountered an issue processing your request.");
         }
       } catch (err) {
         removeLoadingIndicator(loadingId);
-        appendChatMessage("assistant", "Network error. Please make sure the server is active.");
+        appendChatMessage("assistant", "Network error. Make sure your FastAPI backend is running.");
       }
-    }
-
-    function sendQuickPrompt(promptText) {
-      document.getElementById('chat-input').value = promptText;
-      document.getElementById('chat-form').dispatchEvent(new Event('submit'));
     }
 
     function appendChatMessage(sender, rawText, widget = null) {
       const container = document.getElementById('chat-messages');
       const msgDiv = document.createElement('div');
-
       const cleanText = parseResponseText(rawText);
 
       if (sender === "user") {
-        msgDiv.className = "flex justify-end";
+        msgDiv.className = "flex justify-end font-wide";
         msgDiv.innerHTML = `
-          <div class="bg-cyan-600 text-white p-3 rounded-2xl rounded-tr-sm max-w-[85%] leading-relaxed shadow-sm font-medium">
+          <div class="bg-white text-black font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[85%] sm:max-w-[70%] leading-relaxed shadow-sm text-xs">
             ${cleanText}
           </div>
         `;
       } else {
-        msgDiv.className = "flex gap-2.5 items-start";
+        msgDiv.className = "flex items-start gap-2.5 font-wide";
         let widgetHtml = "";
 
-        // Unmarked Lag Reconciliation Interactive Widget
         if (widget && widget.type === "unmarked_reconciliation") {
           widgetHtml = renderUnmarkedWidget(widget.unmarked);
         }
 
         msgDiv.innerHTML = `
-          <div class="w-6 h-6 rounded-lg bg-cyan-600 flex items-center justify-center text-white shrink-0 mt-0.5">
-            <i class="ph-bold ph-robot text-sm"></i>
-          </div>
-          <div class="bg-slate-800/80 text-slate-200 p-3 rounded-2xl rounded-tl-sm max-w-[90%] leading-relaxed shadow-sm space-y-3">
-            <div class="space-y-1">${formatMarkdown(cleanText)}</div>
+          <div class="bg-[#121b33] text-indigo-100 px-4 py-2.5 rounded-2xl rounded-tl-sm max-w-[90%] sm:max-w-[75%] leading-relaxed border border-indigo-900/30 shadow-sm text-xs space-y-2.5">
+            <div class="font-wide">${formatMarkdown(cleanText)}</div>
             ${widgetHtml}
           </div>
         `;
@@ -516,15 +680,15 @@
       let itemsHtml = "";
       dates.forEach(d => {
         const periods = unmarkedData[d];
-        const tags = periods.map(p => `P${p.slot}: ${p.subject.substring(0, 7)}`).join(', ');
+        const tags = periods.map(p => `P${p.slot}: ${formatSubjectName(p.subject).substring(0, 8)}`).join(', ');
 
         itemsHtml += `
-          <div id="unmarked-card-${d}" class="p-2.5 rounded-xl bg-slate-950/80 border border-amber-500/30 flex flex-col gap-2">
+          <div id="unmarked-card-${d}" class="p-2.5 rounded-xl bg-zinc-950/80 border border-amber-500/30 flex flex-col gap-2 font-wide">
             <div class="flex justify-between items-center text-[11px]">
-              <span class="font-mono font-bold text-amber-300">📅 ${d}</span>
-              <span class="text-slate-400">(${periods.length} periods: ${tags})</span>
+              <span class="font-grand font-bold text-amber-300">📅 ${d}</span>
+              <span class="text-zinc-400">(${periods.length} periods: ${tags})</span>
             </div>
-            <div class="flex items-center gap-2 pt-1">
+            <div class="flex items-center gap-2 pt-1 font-grand">
               <button onclick="reconcileDateInline('${d}', 'allpresent')" class="flex-1 py-1 rounded bg-emerald-600/90 hover:bg-emerald-500 text-white font-semibold text-[11px] transition">
                 Mark Present
               </button>
@@ -537,8 +701,8 @@
       });
 
       return `
-        <div class="mt-2 space-y-2 border-t border-slate-700/60 pt-2.5">
-          <div class="text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+        <div class="mt-2 space-y-2 border-t border-indigo-900/60 pt-2.5 font-wide">
+          <div class="text-[10px] font-grand font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
             <i class="ph-bold ph-lightning"></i> Action Required: Quick Reconcile
           </div>
           ${itemsHtml}
@@ -558,11 +722,7 @@
           showToast(`Marked ${dateStr} as ${action === 'allpresent' ? 'Present' : 'Absent'}!`);
           const card = document.getElementById(`unmarked-card-${dateStr}`);
           if (card) {
-            card.innerHTML = `
-              <div class="flex justify-between items-center text-[11px] text-emerald-400 font-mono py-1">
-                <span>✓ ${dateStr} successfully marked as ${action === 'allpresent' ? 'PRESENT' : 'ABSENT'}</span>
-              </div>
-            `;
+            card.innerHTML = `<span class="text-emerald-400 font-wide text-[11px]">✓ ${dateStr} marked as ${action === 'allpresent' ? 'PRESENT' : 'ABSENT'}</span>`;
           }
           loadCalendar();
         } else {
@@ -578,11 +738,9 @@
       const container = document.getElementById('chat-messages');
       const div = document.createElement('div');
       div.id = id;
-      div.className = "flex gap-2.5 items-center text-slate-400 text-xs italic";
+      div.className = "flex items-center gap-2 text-zinc-500 text-xs italic font-wide";
       div.innerHTML = `
-        <div class="w-6 h-6 rounded-lg bg-cyan-600 flex items-center justify-center text-white shrink-0">
-          <i class="ph-bold ph-robot text-sm"></i>
-        </div>
+        <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping"></span>
         <span>Linwise is checking calculations...</span>
       `;
       container.appendChild(div);
@@ -595,37 +753,24 @@
       if (el) el.remove();
     }
 
-    function clearChatHistory() {
-      const container = document.getElementById('chat-messages');
-      container.innerHTML = `
-        <div class="flex gap-2.5 items-start">
-          <div class="w-6 h-6 rounded-lg bg-cyan-600 flex items-center justify-center text-white shrink-0 mt-0.5">
-            <i class="ph-bold ph-robot text-sm"></i>
-          </div>
-          <div class="bg-slate-800/80 text-slate-200 p-3 rounded-2xl rounded-tl-sm max-w-[85%] leading-relaxed shadow-sm">
-            Chat cleared. How can I assist you with your attendance today?
-          </div>
-        </div>
-      `;
-    }
-
-    // --- 4. Portal Sync ---
+    // --- Portal Sync (Inside Profile) ---
     async function triggerPortalSync() {
       const icon = document.getElementById('sync-icon');
-      icon.classList.add('animate-spin');
+      if (icon) icon.classList.add('animate-spin');
       try {
         const res = await fetch('/api/sync', { method: 'POST' });
         const data = await res.json();
         if (res.ok) {
           showToast(data.message || "Sync complete!");
           loadCalendar();
+          loadTimetable();
         } else {
           showToast(data.detail || "Sync failed.", true);
         }
       } catch (err) {
         showToast("Network error during sync.", true);
       } finally {
-        icon.classList.remove('animate-spin');
+        if (icon) icon.classList.remove('animate-spin');
       }
     }
 
