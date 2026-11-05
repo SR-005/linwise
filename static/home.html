@@ -53,51 +53,75 @@
 
     <!-- LEFT: Visual Academic Calendar (7 cols) -->
     <section class="lg:col-span-7 flex flex-col bg-slate-900/40 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4 overflow-hidden">
-      <!-- Calendar Controls -->
+      
+      <!-- Top Navigation Tabs -->
       <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
-        <div>
-          <h2 class="text-base font-bold text-white flex items-center gap-2">
-            <i class="ph-bold ph-calendar-blank text-cyan-400"></i>
-            <span id="calendar-month-label">Academic Calendar</span>
-          </h2>
-          <p class="text-[11px] text-slate-400">Click any date to inspect scheduled periods.</p>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <button onclick="changeMonth(-1)" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
-            <i class="ph-bold ph-caret-left text-sm"></i>
+        <div class="flex items-center gap-2">
+          <button onclick="switchTab('calendar')" id="tab-btn-calendar" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-cyan-600 text-white shadow-sm flex items-center gap-1.5">
+            <i class="ph-bold ph-calendar-blank"></i> Calendar
           </button>
-          <button onclick="changeMonth(1)" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
-            <i class="ph-bold ph-caret-right text-sm"></i>
+          <button onclick="switchTab('timetable')" id="tab-btn-timetable" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+            <i class="ph-bold ph-table"></i> Weekly Timetable
           </button>
         </div>
-      </div>
 
-      <!-- Days of Week Header -->
-      <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-        <div>Mon</div>
-        <div>Tue</div>
-        <div>Wed</div>
-        <div>Thu</div>
-        <div>Fri</div>
-        <div class="text-amber-400">Sat</div>
-        <div class="text-rose-400">Sun</div>
-      </div>
-
-      <!-- Calendar Month Grid -->
-      <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 flex-1 overflow-y-auto pr-1">
-        <!-- Rendered via JS -->
-      </div>
-
-      <!-- Selected Date Day Details Drawer -->
-      <div id="day-details-panel" class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs space-y-2">
-        <div class="flex items-center justify-between">
-          <span class="font-bold text-slate-200" id="detail-date-title">Select a date</span>
-          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400" id="detail-date-badge">--</span>
-        </div>
-        <div id="detail-periods-list" class="flex flex-wrap gap-1.5 text-[11px]">
-          <span class="text-slate-500 italic">Click a working day above to view periods.</span>
+        <div id="calendar-month-controls" class="flex items-center gap-2">
+          <span id="calendar-month-label" class="text-xs font-bold text-slate-200"></span>
+          <div class="flex items-center gap-1">
+            <button onclick="changeMonth(-1)" class="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">
+              <i class="ph-bold ph-caret-left text-xs"></i>
+            </button>
+            <button onclick="changeMonth(1)" class="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">
+              <i class="ph-bold ph-caret-right text-xs"></i>
+            </button>
+          </div>
         </div>
       </div>
+
+      <!-- CALENDAR TAB CONTAINER -->
+      <div id="tab-calendar-container" class="flex flex-col flex-1 space-y-4 overflow-hidden">
+        <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div>
+          <div class="text-amber-400">Sat</div>
+          <div class="text-rose-400">Sun</div>
+        </div>
+
+        <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 flex-1 overflow-y-auto pr-1"></div>
+
+        <div id="day-details-panel" class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-200" id="detail-date-title">Select a date</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400" id="detail-date-badge">--</span>
+          </div>
+          <div id="detail-periods-list" class="flex flex-wrap gap-1.5 text-[11px]">
+            <span class="text-slate-500 italic">Click a working day above to view periods.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIMETABLE TAB CONTAINER -->
+      <div id="tab-timetable-container" class="hidden flex-1 overflow-y-auto space-y-3 pr-1">
+        <p class="text-xs text-slate-400">Standard period schedule mapped from Monday to Saturday:</p>
+        <div class="overflow-x-auto border border-slate-800 rounded-xl bg-slate-950/60">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-900 border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400">
+              <tr>
+                <th class="py-2.5 px-3">Day</th>
+                <th class="py-2.5 px-2 text-center">P1</th>
+                <th class="py-2.5 px-2 text-center">P2</th>
+                <th class="py-2.5 px-2 text-center">P3</th>
+                <th class="py-2.5 px-2 text-center">P4</th>
+                <th class="py-2.5 px-2 text-center">P5</th>
+                <th class="py-2.5 px-2 text-center">P6</th>
+              </tr>
+            </thead>
+            <tbody id="timetable-tbody" class="divide-y divide-slate-800/60 font-mono">
+              <tr><td colspan="7" class="p-6 text-center text-slate-500 italic">Loading timetable...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </section>
 
     <!-- RIGHT: AI Chatbot (5 cols) -->
@@ -164,9 +188,11 @@
 
   </main>
 
-<!-- Client JavaScript -->
+
+  <!-- Client JavaScript -->
   <script>
     let calendarStore = {};
+    let timetableStore = {};
     let activeMonthDate = new Date(2026, 9, 1); // Defaults to October 2026 (Month index 9)
     const sessionId = "session_" + Math.random().toString(36).substring(2, 9);
 
@@ -179,6 +205,30 @@
       }`;
       toast.classList.remove('hidden');
       setTimeout(() => toast.classList.add('hidden'), 4000);
+    }
+
+    // --- Tab Switching (Calendar vs Timetable) ---
+    function switchTab(tab) {
+      const calContainer = document.getElementById('tab-calendar-container');
+      const ttContainer = document.getElementById('tab-timetable-container');
+      const calBtn = document.getElementById('tab-btn-calendar');
+      const ttBtn = document.getElementById('tab-btn-timetable');
+      const calControls = document.getElementById('calendar-month-controls');
+
+      if (tab === 'calendar') {
+        calContainer.classList.remove('hidden');
+        ttContainer.classList.add('hidden');
+        calControls.classList.remove('hidden');
+        calBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-cyan-600 text-white shadow-sm flex items-center gap-1.5";
+        ttBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center gap-1.5";
+      } else {
+        calContainer.classList.add('hidden');
+        ttContainer.classList.remove('hidden');
+        calControls.classList.add('hidden');
+        ttBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-cyan-600 text-white shadow-sm flex items-center gap-1.5";
+        calBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center gap-1.5";
+        loadTimetable();
+      }
     }
 
     // --- Response Cleaning & Formatting ---
@@ -201,7 +251,6 @@
 
       // Check for Python stringified dict / list representation with 'extras', 'signature', etc.
       if (text.startsWith("[{'") || text.startsWith('[{"') || text.startsWith("{'text'") || text.startsWith('{"text"')) {
-        // Regex extracts value of 'text': '...' or "text": "..."
         const match = text.match(/['"]text['"]\s*:\s*(['"])((?:\\.|(?!\1)[\s\S])*)\1/);
         if (match && match[2]) {
           text = match[2]
@@ -344,7 +393,44 @@
       });
     }
 
-    // --- 2. Chatbot Pipeline ---
+    // --- 2. Weekly Timetable ---
+    async function loadTimetable() {
+      try {
+        const res = await fetch('/api/timetable');
+        const data = await res.json();
+        timetableStore = data.timetable || {};
+        renderTimetable();
+      } catch (err) {
+        console.error("Failed to load timetable:", err);
+      }
+    }
+
+    function renderTimetable() {
+      const tbody = document.getElementById('timetable-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+
+      days.forEach(day => {
+        const periods = timetableStore[day] || ["free", "free", "free", "free", "free", "free"];
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-800/20 transition-colors";
+        
+        let slotsHtml = periods.map(p => {
+          const isFree = !p || p === 'free';
+          const style = isFree ? "text-slate-600 italic" : "text-cyan-300 font-semibold";
+          return `<td class="py-2.5 px-2 text-center truncate max-w-[85px] ${style}">${isFree ? 'FREE' : p.substring(0, 8)}</td>`;
+        }).join('');
+
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-sans font-bold text-slate-300 capitalize">${day.substring(0, 3)}</td>
+          ${slotsHtml}
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- 3. Chatbot Pipeline ---
     async function handleChatSubmit(e) {
       e.preventDefault();
       const input = document.getElementById('chat-input');
@@ -367,6 +453,11 @@
 
         if (res.ok) {
           appendChatMessage("assistant", data.text, data.widget);
+          // Auto-sync visual components in case the AI modified holidays or timetable periods
+          loadCalendar();
+          if (!document.getElementById('tab-timetable-container').classList.contains('hidden')) {
+            loadTimetable();
+          }
         } else {
           appendChatMessage("assistant", data.detail || "Sorry, I ran into an error processing your request.");
         }
@@ -518,7 +609,7 @@
       `;
     }
 
-    // --- 3. Portal Sync ---
+    // --- 4. Portal Sync ---
     async function triggerPortalSync() {
       const icon = document.getElementById('sync-icon');
       icon.classList.add('animate-spin');
