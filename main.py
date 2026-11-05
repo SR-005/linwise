@@ -112,6 +112,11 @@ class AttendenceStatusRequest(BaseModel):
     date: str
     action: str
 
+class TimetableEditRequest(BaseModel):
+    day: str
+    period: str
+    subject: str
+
 class ChatRequest(BaseModel):
     message: str
     sessionid: Optional[str] = "defaultuser"
@@ -136,6 +141,24 @@ def apigetcalendar():
     calendar=studentdata.get("studentcalendar", {})
     return {"calendar": calendar}
 
+@app.get("/api/timetable")
+def apigettimetable():
+    _,studentdetails=getstudentdata(studentid)
+    if not studentdetails.exists:
+        raise HTTPException(status_code=404, detail="Student record not found.")
+
+    studentdata=studentdetails.to_dict()
+    return {"timetable": studentdata.get("timetable", {})}
+
+@app.post("/api/timtable/edit")
+def apiedittimetable(req: TimetableEditRequest):
+    success=computations.edittimetable(studentid, req.day, req.period, req.subject)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to update timetable period.")
+    return {"success": True, "day": req.day, "period": req.period, "subject": req.subject}
+
+
+#to mark any unmarked attendence slots
 @app.post("/api/markunmarked")
 def apimarkunmarked(req: AttendenceStatusRequest):
     newstatus="present" if req.action=="allpresent" else "absent"
@@ -144,6 +167,7 @@ def apimarkunmarked(req: AttendenceStatusRequest):
         raise HTTPException(status_code=400, detail="Failed to reconcile selected date.")
     return {"success": True, "date": req.date, "attendance": newstatus}
 
+#to sync the attendence from linways to existing data in firebase
 @app.post("/api/sync")
 def apisync():
     session=linwayslogin(studentid, password)
@@ -161,6 +185,7 @@ def apisync():
         raise HTTPException(status_code=500, detail=f"Sync Error: {str(e)}")
     finally:
         session.close()
+
 
 #AI Chatbot helper Models and POST Endpoints
 @app.post("/chat",response_model=ChatResponse)
