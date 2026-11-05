@@ -14,6 +14,24 @@ load_dotenv()
 studentid="P012CSOM23"
 
 @tool
+def markholidaytool(targetdate: str, reason: str = "Declared Holiday") -> dict:
+    """Marks a specific calendar date (YYYY-MM-DD) as a holiday with a given reason."""
+    success=computations.markholiday(studentid, targetdate, reason)
+    return {"success": success, "date": targetdate, "status": "holiday", "reason": reason}
+
+@tool
+def unmarkholidaytool(targetdate: str) -> dict:
+    """Reverts a holiday date (YYYY-MM-DD) back to a working day with default timetable periods."""
+    success=computations.unmarkholiday(studentid, targetdate)
+    return {"success": success, "date": targetdate, "status": "working"}
+
+@tool
+def edittimetabletool(dayname: str, periodnumber: int, newsubject: str) -> dict:
+    """Changes a subject for a given weekday (monday-saturday) and period slot (1-6) in the weekly timetable."""
+    success=computations.edittimetable(studentid, dayname, periodnumber, newsubject)
+    return {"success": success, "day": dayname, "period": periodnumber, "new_subject": newsubject}
+
+@tool
 def calculateattendancetool() -> list:
     """Calculates cumulative 75% runway metrics and safe bunks for all subjects."""
     return computations.calculateattendence(studentid)
@@ -28,13 +46,17 @@ def simulatebunktool(targetdate: str, slots: list[int]=None) -> list:
     """Simulates the attendance percentage drop if classes are skipped on a given date."""
     return computations.simulatebunk(studentid, targetdate, slots)
 
-tools=[calculateattendancetool, getunmarkedtool, simulatebunktool]
+tools=[markholidaytool, unmarkholidaytool, edittimetabletool, calculateattendancetool, getunmarkedtool, simulatebunktool]
 toolmapping={t.name: t for t in tools}
 
 SYSTEM_PROMPT = """You are Linwise AI, an intelligent KTU attendance companion.
-- Your goal is to help students track their attendance, manage their 75% runway, simulate bunks, and resolve unposted portal dates.
-- Always use the provided tools to fetch accurate real-time numbers. Never guess attendance percentages or bunk buffers.
-- Provide direct, concise, and helpful explanations without unnecessary gyaan.
+- Your capabilities:
+  1. Calculate attendance, remaining classes, and bunk buffers.
+  2. Detect unposted Linways portal lag dates.
+  3. Simulate bunk impacts on target dates and slots.
+  4. Declare a date as a holiday (`mark_holiday_tool`) or revert a holiday back to a working day (`unmark_holiday_tool`).
+  5. Update regular weekly timetable period slots (`edit_timetable_period_tool`).
+- Always use the tools to make actual database updates or retrieve metrics. Keep responses crisp and direct.
 """
 
 llm=ChatGoogleGenerativeAI(model="gemini-flash-lite-latest")    #creating llm
