@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 from pydantic import BaseModel
 import httpx
+from firebase import db
 
 import httpx
 
@@ -12,7 +13,7 @@ import pandas as pd
 from datetime import date
 from typing import List, Optional, Dict, Any
 
-
+import auth
 from firebase import saveattendence, getattendence, getstudentdata
 import computations
 from parsers import attendenceparser, periodattendenceparser, timetableparser, calenderparser, buildcalendar, editcalendar, updateattendence
@@ -107,6 +108,17 @@ def attendence(session, studentid: str):
 def initialtimetable(studentid: str):
     timetableparser(studentid, r"media/timetable.jpeg")
 
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class ConnectLinwaysRequest(BaseModel):
+    username: str
+    password: str
 
 class AttendenceStatusRequest(BaseModel):
     date: str
@@ -126,9 +138,61 @@ class ChatResponse(BaseModel):
     widget: Optional[dict]=None
     sessionid: str
 
+#sending current token for verification via auth.decodeaccesstoken()
+def getcurrentuser(authorization: str=Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    token=authorization.split[1]
+    username=auth.decodeaccesstoken(token)
+    if not username:
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+    return username
+
 @app.get("/")
 def dashboard():
     return FileResponse("static/home.html")
+
+#new user register endpoint
+@app.post("/api/auth/register")
+def apiregister(req: RegisterRequest):
+    userdetails= db.collection("users").document(req.username.lower())
+    if userdetails.get().exists:
+        raise HTTPException(status_code=400, detail="Username already taken")
+
+    userdetails.set({
+        "username": req.username.lower(),
+        "passwordhash": auth.hashpassword(req.password),
+        "linwaysconnected": False,
+        "studentid": None
+    })
+
+    token=auth.createaccesstoken(req.username.lower())
+    return {
+        "success": True,
+        "token": token,
+        "username": req.username.lower(),
+        "linwaysconnected": False
+    }
+
+@app.post("/api/auth/login")
+def apilogin(req: LoginRequest):
+    userdetails=db.collection("users").document(req.username.lower()).get()
+    if not userdetails.exists:
+        raise HTTPException(status_code=400, detail="User not found")
+
+    userdata=userdetails.to_dict()
+    if not auth.verifypassword(req.password, userdata.get("passwordhash","")):
+        raise HTTPException(status_code=400, detail="Incorrect password")
+
+    token=auth.createaccesstoken(req.username.lower())
+    return {
+        "success": True,
+        "token": token,
+        "username": req.username.lower(),
+        "linways_connected": userdata.get("linwaysconnected", False),
+        "studentid": userdata.get("studentid")
+    }
 
 #to fetch and display calendar 
 @app.post("/api/calendar")
