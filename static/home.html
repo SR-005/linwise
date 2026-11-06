@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-[#121316] text-slate-100 selection:bg-purple-600/30 selection:text-purple-200">
+<html lang="en" class="h-full bg-[#08090d] text-slate-100 selection:bg-purple-600/30 selection:text-purple-200">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,7 +27,7 @@
   </script>
 
   <style>
-    /* Strict global Agrandir font locking across all elements */
+    /* Strict global Agrandir font locking */
     *, html, body, button, input, select, textarea, table, th, td, code, pre {
       font-family: 'Agrandir', sans-serif !important;
     }
@@ -42,11 +42,53 @@
       letter-spacing: 0.02em;
     }
 
+    /* Core Dark Glassmorphic Utilities */
+    .glass-surface {
+      background: rgba(18, 20, 28, 0.45);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+        0 24px 48px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      box-shadow: 
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+        0 12px 30px -8px rgba(0, 0, 0, 0.5);
+    }
+
+    .glass-tile {
+      background: rgba(255, 255, 255, 0.025);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-tile:hover {
+      background: rgba(255, 255, 255, 0.055);
+      border-color: rgba(255, 255, 255, 0.18);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.16), 0 8px 20px -4px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Active nav pill gradient + neon edge light */
+    .active-nav-glow {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0%, rgba(67, 56, 202, 0.35) 65%, rgba(99, 102, 241, 0.3) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    }
+
     /* Custom refined scrollbar */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #121316; }
-    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
-    ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
 
     /* Vertical text for side calendar dock */
     .vertical-writing-lr {
@@ -56,66 +98,108 @@
     }
   </style>
 </head>
-<body class="h-full flex overflow-hidden antialiased bg-[#121316]">
+<body class="h-full flex overflow-hidden antialiased bg-[#08090d] text-slate-100 relative">
+
+  <!-- ================= AMBIENT BACKGROUND GLOW (Provides light to refract through glass) ================= -->
+  <div class="fixed top-[-15%] left-[-10%] w-[650px] h-[650px] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none z-0"></div>
+  <div class="fixed top-[30%] right-[15%] w-[550px] h-[550px] bg-purple-600/10 rounded-full blur-[160px] pointer-events-none z-0"></div>
+  <div class="fixed bottom-[-15%] left-[25%] w-[700px] h-[700px] bg-blue-700/10 rounded-full blur-[180px] pointer-events-none z-0"></div>
+  <div class="fixed bottom-[10%] right-[-5%] w-[450px] h-[450px] bg-cyan-500/10 rounded-full blur-[130px] pointer-events-none z-0"></div>
 
   <!-- Notification Toast -->
-  <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl border text-xs font-medium shadow-2xl transition font-wide"></div>
+  <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl glass-surface text-xs font-medium shadow-2xl transition font-wide"></div>
 
-  <!-- ================= LEFT SIDEBAR ================= -->
-  <aside class="w-48 bg-black border-r border-[#27272a]/80 flex flex-col justify-between py-6 px-3 shrink-0 z-30 select-none">
-    <div class="space-y-8">
+  <!-- ================= LEFT SIDEBAR (Dark Glassmorphism) ================= -->
+  <aside class="w-56 glass-surface border-r border-white/[0.08] flex flex-col justify-between py-6 px-3.5 shrink-0 z-30 select-none relative">
+    <div class="space-y-6">
       <!-- Linwise Logo -->
-      <div class="px-3 flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center font-grand text-white text-lg tracking-tighter shadow-md shadow-purple-900/40">
+      <div class="px-2 flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center font-grand text-white text-lg tracking-tighter shadow-lg shadow-indigo-900/50 border border-white/20">
           L
         </div>
-        <span class="text-sm font-grand font-bold tracking-tight text-white">Linwise</span>
+        <span class="text-sm font-grand font-bold tracking-tight text-white drop-shadow-sm">Linwise</span>
+      </div>
+
+      <!-- Quick Search Bar -->
+      <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.07] text-xs text-zinc-400 backdrop-blur-md shadow-inner">
+        <div class="flex items-center gap-2">
+          <i class="ph ph-magnifying-glass text-sm text-zinc-500"></i>
+          <input type="text" placeholder="Search..." class="bg-transparent text-xs text-zinc-300 placeholder-zinc-500 focus:outline-none w-20 font-wide">
+        </div>
+        <div class="flex items-center gap-1 font-mono text-[10px] bg-white/[0.06] border border-white/[0.08] px-1.5 py-0.5 rounded text-zinc-400">
+          <span>⌘</span>
+          <span>F</span>
+        </div>
       </div>
 
       <!-- Navigation Links -->
-      <nav class="space-y-1.5 font-wide">
-        <button onclick="switchView('chat')" id="nav-chat" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition bg-[#222328] text-white shadow-sm">
-          <i class="ph-bold ph-chat-circle-dots text-sm"></i>
-          <span>Chat</span>
-        </button>
+      <nav class="space-y-5 font-wide">
+        <!-- Main Section -->
+        <div>
+          <span class="text-[10px] font-grand font-bold tracking-wider text-zinc-500 uppercase px-2 mb-2 block">Main</span>
+          <div class="space-y-1">
+            <button onclick="switchView('chat')" id="nav-chat" class="w-full relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition active-nav-glow text-white shadow-sm overflow-hidden">
+              <i class="ph-bold ph-chat-circle-dots text-sm text-indigo-300"></i>
+              <span>Chat</span>
+              <span id="nav-chat-pill" class="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-gradient-to-b from-blue-400 to-indigo-500 shadow-[0_0_12px_#6366f1]"></span>
+            </button>
 
-        <button onclick="switchView('timetable')" id="nav-timetable" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition text-zinc-400 hover:text-white hover:bg-zinc-900/80">
-          <i class="ph-bold ph-table text-sm"></i>
-          <span>Timetable</span>
-        </button>
+            <button onclick="switchView('timetable')" id="nav-timetable" class="w-full relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition text-zinc-400 hover:text-white hover:bg-white/[0.04]">
+              <i class="ph-bold ph-table text-sm text-zinc-400"></i>
+              <span>Timetable</span>
+              <span id="nav-timetable-pill" class="hidden absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-gradient-to-b from-blue-400 to-indigo-500 shadow-[0_0_12px_#6366f1]"></span>
+            </button>
+          </div>
+        </div>
 
-        <button onclick="switchView('profile')" id="nav-profile" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition text-zinc-400 hover:text-white hover:bg-zinc-900/80">
-          <i class="ph-bold ph-user text-sm"></i>
-          <span>Profile</span>
-        </button>
+        <!-- System Section -->
+        <div>
+          <span class="text-[10px] font-grand font-bold tracking-wider text-zinc-500 uppercase px-2 mb-2 block">System</span>
+          <div class="space-y-1">
+            <button onclick="switchView('profile')" id="nav-profile" class="w-full relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition text-zinc-400 hover:text-white hover:bg-white/[0.04]">
+              <i class="ph-bold ph-user text-sm text-zinc-400"></i>
+              <span>Profile</span>
+              <span id="nav-profile-pill" class="hidden absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-gradient-to-b from-blue-400 to-indigo-500 shadow-[0_0_12px_#6366f1]"></span>
+            </button>
+          </div>
+        </div>
       </nav>
+    </div>
+
+    <!-- Bottom Status Card -->
+    <div class="px-3 py-2.5 rounded-xl glass-card text-[11px] font-wide text-zinc-400 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]"></span>
+        <span class="text-[10px] text-zinc-300">S7 CS</span>
+      </div>
+      <span class="text-[10px] font-grand font-bold text-indigo-300">AISAT</span>
     </div>
   </aside>
 
   <!-- ================= MAIN VIEWPORT ================= -->
-  <main class="flex-1 flex flex-col relative overflow-hidden bg-[#18191d]">
+  <main class="flex-1 flex flex-col relative overflow-hidden z-10">
 
     <!-- ----------------- VIEW 1: CHAT INTERFACE ----------------- -->
     <div id="view-chat" class="flex-1 flex flex-col h-full overflow-hidden">
       <!-- Messages Stream -->
-      <div id="chat-messages" class="flex-1 overflow-y-auto px-6 lg:px-16 py-8 space-y-4 text-xs font-wide">
-        <!-- Messages will be appended dynamically -->
+      <div id="chat-messages" class="flex-1 overflow-y-auto px-6 lg:px-20 py-8 space-y-4 text-xs font-wide">
+        <!-- Messages appended dynamically -->
       </div>
 
       <!-- Bottom Chat Input Bar -->
-      <div class="p-4 lg:p-6 bg-[#151619]/90 border-t border-zinc-800/80">
-        <form id="chat-form" onsubmit="handleChatSubmit(event)" class="max-w-4xl mx-auto flex items-center bg-[#24252a] rounded-2xl px-4 py-2.5 border border-zinc-700/60 focus-within:border-purple-500 transition shadow-inner font-wide">
+      <div class="p-5 lg:p-6 bg-transparent">
+        <form id="chat-form" onsubmit="handleChatSubmit(event)" class="max-w-4xl mx-auto flex items-center glass-surface rounded-2xl px-4 py-2.5 focus-within:border-indigo-400/60 focus-within:shadow-[0_0_25px_rgba(99,102,241,0.25)] transition duration-200 font-wide">
           <input 
             type="text" 
             id="chat-input" 
-            placeholder="Ask Linwise..." 
-            class="flex-1 bg-transparent text-xs text-white placeholder-zinc-500 focus:outline-none"
+            placeholder="Ask Linwise anything about attendance, bunks, or timetable..." 
+            class="flex-1 bg-transparent text-xs text-white placeholder-zinc-500 focus:outline-none font-wide"
             autocomplete="off"
           />
           <button 
             type="submit" 
             id="chat-send-btn" 
-            class="w-7 h-7 rounded-full bg-white hover:bg-zinc-200 text-black flex items-center justify-center transition shadow shrink-0"
+            class="w-8 h-8 rounded-xl bg-white hover:bg-zinc-200 text-black flex items-center justify-center transition shadow-lg shrink-0 hover:scale-105 active:scale-95"
           >
             <i class="ph-bold ph-arrow-up text-xs"></i>
           </button>
@@ -125,44 +209,47 @@
 
     <!-- ----------------- VIEW 2: TIMETABLE ----------------- -->
     <div id="view-timetable" class="hidden flex-1 overflow-y-auto p-6 lg:p-10 flex flex-col items-center justify-start">
-      <div class="w-full max-w-7xl bg-[#1c1d22] border border-zinc-800 rounded-3xl p-8 lg:p-10 shadow-2xl space-y-8">
+      <div class="w-full max-w-7xl glass-surface rounded-3xl p-8 lg:p-10 shadow-2xl space-y-8">
         
         <!-- Timetable Header -->
-        <div class="flex items-center justify-between border-b border-zinc-800/90 pb-5">
-          <h2 class="text-3xl font-grand font-extrabold text-amber-400 tracking-wider">CSE B</h2>
-          <span class="text-3xl font-grand font-extrabold text-amber-400">S7</span>
+        <div class="flex items-center justify-between border-b border-white/[0.08] pb-5">
+          <div class="flex items-center gap-3">
+            <div class="w-3 h-8 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 shadow-[0_0_12px_rgba(251,191,36,0.4)]"></div>
+            <h2 class="text-3xl font-grand font-extrabold text-amber-400 tracking-wider">CSE B</h2>
+          </div>
+          <span class="text-3xl font-grand font-extrabold text-amber-400/90 bg-amber-400/10 px-4 py-1 rounded-xl border border-amber-400/20 backdrop-blur-md">S7</span>
         </div>
 
         <!-- Timetable Grid Container -->
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto rounded-2xl border border-white/[0.08] bg-black/30 backdrop-blur-md">
           <table class="w-full text-center border-collapse font-wide">
             <thead>
-              <tr class="text-zinc-400 text-sm font-semibold border-b border-zinc-800">
-                <th class="py-4 px-6 text-left font-grand w-36"></th>
-                <th class="py-4 px-4 border-l border-zinc-800/80">Period 1</th>
-                <th class="py-4 px-4 border-l border-zinc-800/80">Period 2</th>
-                <th class="py-4 px-4 border-l border-zinc-800/80">Period 3</th>
-                <th class="py-4 px-4 border-l border-zinc-800/80">Period 4</th>
-                <th class="py-4 px-4 border-l border-zinc-800/80">Period 5</th>
-                <th class="py-4 px-4 border-l border-zinc-800/80">Period 6</th>
+              <tr class="text-zinc-400 text-sm font-semibold border-b border-white/[0.08] bg-white/[0.02]">
+                <th class="py-4 px-6 text-left font-grand w-36 text-zinc-300">DAY</th>
+                <th class="py-4 px-4 border-l border-white/[0.06]">Period 1</th>
+                <th class="py-4 px-4 border-l border-white/[0.06]">Period 2</th>
+                <th class="py-4 px-4 border-l border-white/[0.06]">Period 3</th>
+                <th class="py-4 px-4 border-l border-white/[0.06]">Period 4</th>
+                <th class="py-4 px-4 border-l border-white/[0.06]">Period 5</th>
+                <th class="py-4 px-4 border-l border-white/[0.06]">Period 6</th>
               </tr>
             </thead>
-            <tbody id="timetable-tbody" class="divide-y divide-zinc-800/80 text-sm font-wide">
+            <tbody id="timetable-tbody" class="divide-y divide-white/[0.06] text-sm font-wide">
               <!-- Rendered via JS -->
             </tbody>
           </table>
         </div>
 
         <!-- Bottom Timetable Action -->
-        <div class="pt-8 border-t border-zinc-800/80 flex flex-col items-center text-center space-y-4 font-wide">
+        <div class="pt-6 border-t border-white/[0.08] flex flex-col items-center text-center space-y-4 font-wide">
           <p class="text-xs sm:text-sm text-zinc-400 max-w-xl">
             If this timetable doesn't match your current schedule, you can either pick a preset or upload an entirely new one.
           </p>
           <div class="flex items-center gap-5">
-            <button class="px-7 py-3 rounded-xl bg-white hover:bg-zinc-200 text-black font-grand font-bold text-xs sm:text-sm transition shadow-md hover:scale-[1.02] active:scale-[0.98]">
+            <button class="px-7 py-3 rounded-xl bg-white hover:bg-zinc-200 text-black font-grand font-bold text-xs sm:text-sm transition shadow-lg hover:scale-[1.02] active:scale-[0.98]">
               Upload Timetable
             </button>
-            <span class="text-xs sm:text-sm font-semibold text-zinc-300 font-grand">S7 CSE B</span>
+            <span class="text-xs sm:text-sm font-semibold text-zinc-300 font-grand glass-card px-4 py-2.5 rounded-xl border border-white/[0.08]">S7 CSE B</span>
           </div>
         </div>
 
@@ -174,24 +261,24 @@
       <div class="w-full max-w-5xl space-y-6">
         
         <!-- Profile Identity Card -->
-        <div class="bg-[#1c1d22] border border-zinc-800 rounded-2xl p-7 shadow-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="glass-surface rounded-3xl p-7 shadow-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div class="flex items-center gap-4">
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-grand shadow-lg shadow-purple-900/30">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center text-white text-2xl font-grand shadow-xl shadow-indigo-950/60 border border-white/20">
               <i class="ph-bold ph-user"></i>
             </div>
             <div>
               <div class="flex items-center gap-2">
                 <h2 class="text-lg font-grand font-bold text-white">Student Account</h2>
-                <span class="px-2 py-0.5 rounded text-[10px] font-wide bg-purple-500/10 text-purple-300 border border-purple-500/20">Active</span>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-wide bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 backdrop-blur-md">Active</span>
               </div>
-              <p class="text-xs text-zinc-400 font-wide mt-0.5">
-                ID: <span class="text-purple-300 font-grand font-semibold text-sm">P012CSOM23</span>
+              <p class="text-xs text-zinc-400 font-wide mt-1">
+                ID: <span class="text-indigo-300 font-grand font-semibold text-sm">P012CSOM23</span>
               </p>
             </div>
           </div>
 
           <!-- Linways Sync Button -->
-          <button onclick="triggerPortalSync()" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-grand font-semibold text-xs transition shadow-lg shadow-purple-950/40">
+          <button onclick="triggerPortalSync()" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-grand font-semibold text-xs transition shadow-lg shadow-indigo-950/50 hover:scale-[1.02] active:scale-[0.98] border border-white/10">
             <i class="ph ph-arrows-clockwise text-base" id="sync-icon"></i>
             <span>Sync Linways Portal</span>
           </button>
@@ -200,9 +287,9 @@
         <!-- System & Simulation Tiles -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Simulation Lock Tile -->
-          <div class="p-6 bg-[#1c1d22] border border-zinc-800 rounded-2xl shadow-xl flex flex-col justify-between space-y-3">
+          <div class="p-6 glass-card rounded-2xl shadow-xl flex flex-col justify-between space-y-3">
             <div>
-              <div class="flex items-center gap-2 text-purple-400 text-xs font-grand font-bold uppercase tracking-wider mb-1">
+              <div class="flex items-center gap-2 text-indigo-400 text-xs font-grand font-bold uppercase tracking-wider mb-1">
                 <i class="ph-bold ph-lock-key"></i> Active Anchor Date
               </div>
               <h3 class="text-base font-grand font-bold text-white">Simulation Lock</h3>
@@ -210,16 +297,16 @@
                 Dates on or after this anchor are treated as upcoming classes for safe bunk and runway calculations.
               </p>
             </div>
-            <div class="pt-3 border-t border-zinc-800/80 flex items-center justify-between">
+            <div class="pt-3 border-t border-white/[0.06] flex items-center justify-between">
               <span class="text-xs text-zinc-500 font-wide">Locked Date:</span>
-              <span class="font-wide text-purple-300 font-bold bg-purple-950/40 px-3 py-1 rounded-lg border border-purple-800/40 text-xs">
+              <span class="font-wide text-indigo-300 font-bold bg-indigo-950/40 px-3 py-1 rounded-lg border border-indigo-800/40 text-xs backdrop-blur-md">
                 2026-10-19
               </span>
             </div>
           </div>
 
           <!-- KTU Threshold Tile -->
-          <div class="p-6 bg-[#1c1d22] border border-zinc-800 rounded-2xl shadow-xl flex flex-col justify-between space-y-3">
+          <div class="p-6 glass-card rounded-2xl shadow-xl flex flex-col justify-between space-y-3">
             <div>
               <div class="flex items-center gap-2 text-emerald-400 text-xs font-grand font-bold uppercase tracking-wider mb-1">
                 <i class="ph-bold ph-shield-check"></i> KTU Criteria
@@ -229,9 +316,9 @@
                 Autonomous KTU criterion for semester exam eligibility without condonation fine.
               </p>
             </div>
-            <div class="pt-3 border-t border-zinc-800/80 flex items-center justify-between">
+            <div class="pt-3 border-t border-white/[0.06] flex items-center justify-between">
               <span class="text-xs text-zinc-500 font-wide">Threshold:</span>
-              <span class="font-wide text-emerald-400 font-bold bg-emerald-950/40 px-3 py-1 rounded-lg border border-emerald-800/40 text-xs">
+              <span class="font-wide text-emerald-400 font-bold bg-emerald-950/40 px-3 py-1 rounded-lg border border-emerald-800/40 text-xs backdrop-blur-md">
                 75.0%
               </span>
             </div>
@@ -241,13 +328,13 @@
       </div>
     </div>
 
-    <!-- ================= RIGHT SLIDING CALENDAR DRAWER ================= -->
-    <div id="calendar-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[700px] lg:w-[780px] bg-[#16171b] border-l border-zinc-800 shadow-2xl z-40 transform translate-x-full transition-transform duration-300 flex flex-col">
+    <!-- ================= RIGHT SLIDING CALENDAR DRAWER (Dark Glassmorphic) ================= -->
+    <div id="calendar-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[700px] lg:w-[780px] glass-surface border-l border-white/[0.1] shadow-[-25px_0_60px_rgba(0,0,0,0.8)] z-40 transform translate-x-full transition-transform duration-300 flex flex-col">
       
       <!-- Drawer Header -->
-      <div class="px-6 py-4 border-b border-zinc-800/80 flex items-center justify-between bg-[#121316]">
+      <div class="px-6 py-4 border-b border-white/[0.08] flex items-center justify-between bg-black/20">
         <div class="flex items-center gap-4">
-          <span class="text-xl font-grand font-bold text-white tracking-wide" id="cal-month-title">October</span>
+          <span class="text-xl font-grand font-bold text-white tracking-wide drop-shadow-sm" id="cal-month-title">October</span>
           <div class="flex items-center gap-1.5 text-zinc-400">
             <button onclick="changeMonth(-1)" class="p-1 hover:text-white transition">
               <i class="ph-bold ph-caret-left text-base"></i>
@@ -257,7 +344,7 @@
             </button>
           </div>
         </div>
-        <button onclick="toggleCalendarDrawer(false)" class="text-zinc-400 hover:text-white transition p-1.5 rounded-lg hover:bg-zinc-800">
+        <button onclick="toggleCalendarDrawer(false)" class="text-zinc-400 hover:text-white transition p-1.5 rounded-lg hover:bg-white/[0.06]">
           <i class="ph-bold ph-x text-base"></i>
         </button>
       </div>
@@ -278,30 +365,30 @@
 
         <!-- Expanded Calendar Month Grid -->
         <div id="calendar-grid" class="grid grid-cols-7 gap-2.5 font-wide">
-          <!-- Rendered dynamically -->
+          <!-- Rendered dynamically via JS with true glass tiles -->
         </div>
 
         <!-- Legend Strip Below the Dates -->
-        <div class="flex items-center justify-between text-xs text-zinc-300 py-2.5 px-4 bg-zinc-950/70 rounded-xl border border-zinc-800/80 font-wide">
+        <div class="flex items-center justify-between text-xs text-zinc-300 py-3 px-4 glass-card rounded-2xl border border-white/[0.08] font-wide">
           <span class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-[4px] bg-emerald-400 shrink-0"></span> Present
+            <span class="w-3 h-3 rounded-[4px] bg-emerald-400 shadow-[0_0_10px_#34d399] shrink-0"></span> Present
           </span>
           <span class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-[4px] bg-amber-400 shrink-0"></span> Partial
+            <span class="w-3 h-3 rounded-[4px] bg-amber-400 shadow-[0_0_10px_#fbbf24] shrink-0"></span> Partial
           </span>
           <span class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-[4px] bg-rose-500 shrink-0"></span> Absent
+            <span class="w-3 h-3 rounded-[4px] bg-rose-500 shadow-[0_0_10px_#f43f5e] shrink-0"></span> Absent
           </span>
           <span class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-[4px] bg-white shrink-0"></span> Holiday / Unmarked
+            <span class="w-3 h-3 rounded-[4px] bg-white shadow-[0_0_10px_#ffffff] shrink-0"></span> Holiday / Unmarked
           </span>
         </div>
 
         <!-- Selected Date Period Inspector Drawer -->
-        <div id="date-details-panel" class="hidden p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3 font-wide">
-          <div class="flex items-center justify-between border-b border-zinc-800/80 pb-2.5">
+        <div id="date-details-panel" class="hidden p-4 rounded-2xl glass-card border border-white/[0.1] space-y-3 font-wide shadow-xl">
+          <div class="flex items-center justify-between border-b border-white/[0.08] pb-2.5">
             <span class="font-grand font-bold text-sm text-white" id="inspected-date-label">--</span>
-            <span class="text-[10px] font-wide px-2.5 py-0.5 rounded" id="inspected-date-badge">--</span>
+            <span class="text-[10px] font-wide px-2.5 py-0.5 rounded-full" id="inspected-date-badge">--</span>
           </div>
           <div id="inspected-periods-container" class="space-y-2">
             <!-- Periods populated dynamically -->
@@ -314,7 +401,7 @@
     <!-- Right Edge Calendar Dock Button -->
     <button 
       onclick="toggleCalendarDrawer()" 
-      class="fixed right-0 top-1/2 -translate-y-1/2 bg-black hover:bg-zinc-900 border-l border-y border-zinc-800 text-zinc-300 hover:text-white px-2 py-4 rounded-l-xl z-30 transition shadow-lg flex items-center justify-center gap-1 text-[11px] font-grand font-semibold tracking-wider uppercase select-none"
+      class="fixed right-0 top-1/2 -translate-y-1/2 glass-surface hover:bg-white/[0.08] border-l border-y border-white/[0.08] text-zinc-300 hover:text-white px-2 py-4 rounded-l-2xl z-30 transition shadow-2xl flex items-center justify-center gap-1 text-[11px] font-grand font-semibold tracking-wider uppercase select-none"
     >
       <span class="vertical-writing-lr">Calendar</span>
       <i class="ph-bold ph-caret-left text-xs"></i>
@@ -335,25 +422,31 @@
     function showToast(msg, isError = false) {
       const toast = document.getElementById('toast');
       toast.textContent = msg;
-      toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl border text-xs font-wide font-medium shadow-2xl transition ${
-        isError ? 'bg-rose-950/90 border-rose-500/40 text-rose-300' : 'bg-emerald-950/90 border-emerald-500/40 text-emerald-300'
+      toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl glass-surface text-xs font-wide font-medium shadow-2xl transition border ${
+        isError ? 'border-rose-500/40 text-rose-300' : 'border-emerald-500/40 text-emerald-300'
       }`;
       toast.classList.remove('hidden');
       setTimeout(() => toast.classList.add('hidden'), 4000);
     }
 
-    // --- View Navigation ---
+    // --- View Navigation with Glowing Indicator ---
     function switchView(viewName) {
       const views = ['chat', 'timetable', 'profile'];
       views.forEach(v => {
         document.getElementById(`view-${v}`).classList.add('hidden');
         const nav = document.getElementById(`nav-${v}`);
-        nav.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-wide font-semibold transition text-zinc-400 hover:text-white hover:bg-zinc-900/80";
+        const pill = document.getElementById(`nav-${v}-pill`);
+        
+        nav.className = "w-full relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition text-zinc-400 hover:text-white hover:bg-white/[0.04]";
+        if (pill) pill.classList.add('hidden');
       });
 
       document.getElementById(`view-${viewName}`).classList.remove('hidden');
       const activeNav = document.getElementById(`nav-${viewName}`);
-      activeNav.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-wide font-semibold transition bg-[#222328] text-white shadow-sm";
+      const activePill = document.getElementById(`nav-${viewName}-pill`);
+
+      activeNav.className = "w-full relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition active-nav-glow text-white shadow-sm overflow-hidden";
+      if (activePill) activePill.classList.remove('hidden');
 
       if (viewName === 'timetable') {
         loadTimetable();
@@ -418,12 +511,12 @@
       if (!text) return '';
       return text
         .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-grand font-semibold">$1</strong>')
-        .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-700 font-wide text-[11px] text-purple-300">$1</code>')
+        .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-white/[0.08] border border-white/[0.1] font-wide text-[11px] text-indigo-300">$1</code>')
         .replace(/^[\*\-]\s+(.*)$/gm, '<li class="ml-3 list-disc text-zinc-300 font-wide">$1</li>')
         .replace(/\n/g, '<br>');
     }
 
-    // --- Calendar Loading & Color Rules ---
+    // --- Calendar Loading & Color Rules (True Glassmorphism) ---
     async function loadCalendar() {
       try {
         const res = await fetch('/api/calendar', { method: 'POST' });
@@ -457,7 +550,7 @@
 
       for (let i = 0; i < startingDay; i++) {
         const blank = document.createElement('div');
-        blank.className = "h-20 sm:h-24 rounded-2xl bg-zinc-900/10 border border-zinc-900/30";
+        blank.className = "h-20 sm:h-24 rounded-2xl bg-white/[0.015] border border-white/[0.03]";
         grid.appendChild(blank);
       }
 
@@ -468,7 +561,8 @@
         const cell = document.createElement('div');
         cell.onclick = () => inspectDatePeriods(dateStr, dayData);
 
-        let cellBg = "bg-[#202126] border-zinc-800/80 hover:border-zinc-600";
+        // Dark glass default tile style
+        let cellBg = "glass-tile";
         let dateColor = "text-white";
         let labelText = "";
 
@@ -477,7 +571,8 @@
 
         if (dayData) {
           if (dayData.status === "holiday") {
-            cellBg = "bg-[#251518] border-rose-950/50";
+            // Translucent tinted holiday glass
+            cellBg = "bg-rose-500/[0.07] backdrop-blur-md border border-rose-500/20 shadow-[inset_0_1px_0_0_rgba(244,63,94,0.15)] hover:bg-rose-500/[0.12]";
             dateColor = "text-white";
             labelText = dayData.reason ? dayData.reason.substring(0, 12) : "Holiday";
           } else if (dayData.status === "working") {
@@ -500,14 +595,15 @@
           }
         }
 
+        // Anchor Date Gradient Glass Styling
         if (isAnchorToday) {
-          cellBg = "bg-gradient-to-b from-[#e9d5ff] to-[#a855f7] border-purple-300 shadow-xl shadow-purple-950/40";
+          cellBg = "bg-gradient-to-b from-purple-300/90 to-indigo-500/90 backdrop-blur-xl border border-white/40 shadow-[0_0_30px_rgba(168,85,247,0.4),inset_0_1px_0_0_rgba(255,255,255,0.7)]";
           dateColor = "text-black font-extrabold";
         }
 
-        const borderRing = isSelected ? "ring-2 ring-purple-500 border-purple-400" : "";
+        const borderRing = isSelected ? "ring-2 ring-indigo-400 border-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.4)]" : "";
 
-        cell.className = `h-20 sm:h-24 p-2 sm:p-2.5 rounded-2xl border flex flex-col justify-between cursor-pointer transition select-none font-wide ${cellBg} ${borderRing}`;
+        cell.className = `h-20 sm:h-24 p-2 sm:p-2.5 rounded-2xl flex flex-col justify-between cursor-pointer transition select-none font-wide ${cellBg} ${borderRing}`;
         cell.innerHTML = `
           <div class="flex items-center justify-between">
             <span class="text-sm font-grand font-bold ${dateColor}">${d}</span>
@@ -534,14 +630,14 @@
 
       if (!dayData) {
         badge.textContent = "NO RECORD";
-        badge.className = "text-[10px] font-wide px-2.5 py-0.5 rounded bg-zinc-800 text-zinc-400";
+        badge.className = "text-[10px] font-wide px-2.5 py-0.5 rounded-full bg-white/[0.05] text-zinc-400 border border-white/[0.08]";
         container.innerHTML = `<span class="text-zinc-500 italic text-xs font-wide">No records available for this date.</span>`;
         return;
       }
 
       badge.textContent = dayData.status.toUpperCase();
-      badge.className = `text-[10px] font-wide px-2.5 py-0.5 rounded ${
-        dayData.status === 'working' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40' : 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
+      badge.className = `text-[10px] font-wide px-2.5 py-0.5 rounded-full ${
+        dayData.status === 'working' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 backdrop-blur-md' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20 backdrop-blur-md'
       }`;
 
       if (dayData.status === "holiday") {
@@ -557,7 +653,7 @@
         const formattedSubject = formatSubjectName(p.subject);
 
         const div = document.createElement('div');
-        div.className = "flex items-center justify-between text-xs p-2 rounded-xl bg-zinc-900/90 border border-zinc-800/80 font-wide";
+        div.className = "flex items-center justify-between text-xs p-2.5 rounded-xl glass-tile font-wide";
         div.innerHTML = `
           <span>Period ${p.slot}: <strong class="text-white font-grand">${formattedSubject}</strong></span>
           <span class="${attColor} uppercase text-[11px] font-wide font-bold">${p.attendance}</span>
@@ -587,24 +683,24 @@
       days.forEach(day => {
         const periods = timetableStore[day] || ["Free", "Free", "Free", "Free", "Free", "Free"];
         const tr = document.createElement('tr');
-        tr.className = "hover:bg-zinc-900/40 transition-colors font-wide";
+        tr.className = "hover:bg-white/[0.03] transition-colors font-wide";
 
         let periodsHtml = periods.map(p => {
           const displayName = formatSubjectName(p);
           const isFree = (!displayName || displayName.toLowerCase() === 'free');
-          const style = isFree ? "text-rose-600 font-semibold italic" : "text-zinc-200 font-medium";
-          return `<td class="py-3.5 px-4 border-l border-zinc-800/80 truncate max-w-[130px] ${style}" title="${displayName}">${displayName}</td>`;
+          const style = isFree ? "text-rose-500 font-semibold italic text-sm" : "text-zinc-200 font-medium text-xs sm:text-sm";
+          return `<td class="py-5 px-4 border-l border-white/[0.06] min-w-[140px] leading-snug ${style}" title="${displayName}">${displayName}</td>`;
         }).join('');
 
         tr.innerHTML = `
-          <td class="py-3.5 px-4 text-left font-bold font-grand text-emerald-400 capitalize">${day}</td>
+          <td class="py-5 px-6 text-left font-bold font-grand text-emerald-400 capitalize text-sm sm:text-base">${day}</td>
           ${periodsHtml}
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // --- Chatbot Processing ---
+    // --- Chatbot Processing (Dark Glassmorphic Bubbles) ---
     async function handleChatSubmit(e) {
       e.preventDefault();
       const input = document.getElementById('chat-input');
@@ -649,7 +745,7 @@
       if (sender === "user") {
         msgDiv.className = "flex justify-end font-wide";
         msgDiv.innerHTML = `
-          <div class="bg-white text-black font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[85%] sm:max-w-[70%] leading-relaxed shadow-sm text-xs">
+          <div class="bg-white/[0.92] backdrop-blur-xl text-black font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[85%] sm:max-w-[70%] leading-relaxed shadow-[0_10px_25px_rgba(0,0,0,0.3)] text-xs">
             ${cleanText}
           </div>
         `;
@@ -661,8 +757,9 @@
           widgetHtml = renderUnmarkedWidget(widget.unmarked);
         }
 
+        // Bot message container with genuine dark glass styling
         msgDiv.innerHTML = `
-          <div class="bg-[#121b33] text-indigo-100 px-4 py-2.5 rounded-2xl rounded-tl-sm max-w-[90%] sm:max-w-[75%] leading-relaxed border border-indigo-900/30 shadow-sm text-xs space-y-2.5">
+          <div class="glass-surface text-indigo-100 px-5 py-3 rounded-2xl rounded-tl-sm max-w-[90%] sm:max-w-[75%] leading-relaxed border border-indigo-500/25 shadow-2xl text-xs space-y-2.5">
             <div class="font-wide">${formatMarkdown(cleanText)}</div>
             ${widgetHtml}
           </div>
@@ -683,16 +780,16 @@
         const tags = periods.map(p => `P${p.slot}: ${formatSubjectName(p.subject).substring(0, 8)}`).join(', ');
 
         itemsHtml += `
-          <div id="unmarked-card-${d}" class="p-2.5 rounded-xl bg-zinc-950/80 border border-amber-500/30 flex flex-col gap-2 font-wide">
+          <div id="unmarked-card-${d}" class="p-3 rounded-2xl glass-card border border-amber-500/30 flex flex-col gap-2 font-wide">
             <div class="flex justify-between items-center text-[11px]">
               <span class="font-grand font-bold text-amber-300">📅 ${d}</span>
               <span class="text-zinc-400">(${periods.length} periods: ${tags})</span>
             </div>
             <div class="flex items-center gap-2 pt-1 font-grand">
-              <button onclick="reconcileDateInline('${d}', 'allpresent')" class="flex-1 py-1 rounded bg-emerald-600/90 hover:bg-emerald-500 text-white font-semibold text-[11px] transition">
+              <button onclick="reconcileDateInline('${d}', 'allpresent')" class="flex-1 py-1.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white font-semibold text-[11px] transition shadow-md">
                 Mark Present
               </button>
-              <button onclick="reconcileDateInline('${d}', 'absent')" class="flex-1 py-1 rounded bg-rose-600/90 hover:bg-rose-500 text-white font-semibold text-[11px] transition">
+              <button onclick="reconcileDateInline('${d}', 'absent')" class="flex-1 py-1.5 rounded-xl bg-rose-600/90 hover:bg-rose-500 text-white font-semibold text-[11px] transition shadow-md">
                 Mark Absent
               </button>
             </div>
@@ -701,7 +798,7 @@
       });
 
       return `
-        <div class="mt-2 space-y-2 border-t border-indigo-900/60 pt-2.5 font-wide">
+        <div class="mt-2 space-y-2 border-t border-white/[0.08] pt-2.5 font-wide">
           <div class="text-[10px] font-grand font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
             <i class="ph-bold ph-lightning"></i> Action Required: Quick Reconcile
           </div>
@@ -740,7 +837,7 @@
       div.id = id;
       div.className = "flex items-center gap-2 text-zinc-500 text-xs italic font-wide";
       div.innerHTML = `
-        <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping"></span>
+        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></span>
         <span>Linwise is checking calculations...</span>
       `;
       container.appendChild(div);
