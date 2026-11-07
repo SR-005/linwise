@@ -117,7 +117,7 @@ class LoginRequest(BaseModel):
     password: str
 
 class ConnectLinwaysRequest(BaseModel):
-    username: str
+    studentid: str
     password: str
 
 class AttendenceStatusRequest(BaseModel):
@@ -148,6 +148,20 @@ def getcurrentuser(authorization: str=Header(None)):
     if not username:
         raise HTTPException(status_code=401, detail="Invalid or expired session")
     return username
+
+@app.get("/login")
+def login_page():
+  return FileResponse("static/login.html")
+
+
+@app.get("/signup")
+def signup_page():
+  return FileResponse("static/signup.html")
+
+
+@app.get("/connect")
+def connect_page():
+  return FileResponse("static/connect.html")
 
 @app.get("/")
 def dashboard():
@@ -191,6 +205,41 @@ def apilogin(req: LoginRequest):
         "token": token,
         "username": req.username.lower(),
         "linways_connected": userdata.get("linwaysconnected", False),
+        "studentid": userdata.get("studentid")
+    }
+
+@app.post("/api/auth/connectlinways")
+def apiconnectlinways(req: ConnectLinwaysRequest, authorization: str=Header(None)):
+    username=getcurrentuser(authorization)
+    session=linwayslogin(req.studentid, req.password)
+    if not session:
+        raise HTTPException(status_code=400, detail="Invalid Linways Student ID or Password")
+    session.close()
+
+    userdetails=db.collection("users").document(username)
+    userdetails.update({
+        "linwaysconnected": True,
+        "studentid": req.studentid,
+        "linwayspassword": req.password
+    })
+
+    return {
+        "success": True,
+        "message": "Linways account linked successfully!",
+        "studentid": req.studentid
+    }
+
+@app.post("/api/auth/status")
+def apistatus(authorization: str=Header(None)):
+    username=getcurrentuser(authorization)
+    userrecord=db.collection("users").document(username).get()
+    if not userrecord.exists:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    userdata=userrecord.to_dict()
+    return {
+        "username": username,
+        "linways_connected": userdata.get("linways_connected", False),
         "studentid": userdata.get("studentid")
     }
 
