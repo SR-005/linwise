@@ -1,9 +1,10 @@
 import math
 from typing import Dict, Any, List
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import math
 import re
 from firebase import getstudentdata
+import parsers
 
 lockeddate=date(2026, 10, 19)
 tomorrowdate=lockeddate+timedelta(days=1)
@@ -32,7 +33,7 @@ def markholiday(studentid: str, targetdate: str, reason: str="Declared Holiday")
     studentobj.update({f"studentcalendar.{targetdate}": calendar[targetdate]})  #updating in firebase
     return True
 
-def unmarkholiday(studentid: str, targetdate: str) -> bool:
+def reverttoworkingday(studentid: str, targetdate: str) -> bool:
     studentobj, studentdetails = getstudentdata(studentid)
     if not studentdetails.exists:
         return False
@@ -43,8 +44,9 @@ def unmarkholiday(studentid: str, targetdate: str) -> bool:
     if targetdate not in calendar:
         return False
 
-    dayname=calendar[targetdate].get("day", "").lower()
-    if dayname=="sunday":
+    formatteddate = datetime.strptime(targetdate, "%Y-%m-%d").date()
+    dayname = formatteddate.strftime("%A").lower()
+    if dayname=="sunday" or parsers.evensaturdays(formatteddate):
         return False
 
     periods=timeetable.get(dayname,[])
@@ -57,6 +59,7 @@ def unmarkholiday(studentid: str, targetdate: str) -> bool:
             "source": "linways"
         })
 
+    calendar[targetdate]["day"]=dayname
     calendar[targetdate]["status"]="working"
     calendar[targetdate]["reason"]=""
     calendar[targetdate]["periods"]=reconstructedperiods
@@ -91,7 +94,7 @@ def getunmarked(calender: dict, today: date) -> Dict[str, List[dict]]:
             break
 
         day=calender[datestr]
-        if day.get("status")=="working":
+        if day.get("status") in ["working", "exam"]:
             pendingperiods=[
                 period for period in day.get("periods",[])
                 if period.get("subject") and period.get("subject")!="free" and period.get("attendance")=="notmarked"
@@ -129,6 +132,43 @@ def markunmarked(studentid: str, targetdate: str, status: str)-> bool:
     studentobj.update({f"studentcalendar.{targetdate}.periods": periodlist})
     return True
 
+def setexamday(studentid: str, targetdate: str, subjectslug: str, attendance: str="notmarked"):
+    print(subjectslug)
+
+    studentobj,studentdetails=getstudentdata(studentid)
+    if not studentdetails.exists:
+        return {}
+
+    studentdata=studentdetails.to_dict()
+    timetable=studentdata.get("timetable", {})
+    calendar=studentdata.get("studentcalendar",{})
+    subjects=studentdata.get("subjects", {})
+
+    if targetdate not in calendar:
+        return False
+
+    formatteddate=datetime.strptime(targetdate, "%Y-%m-%d").date()
+    dayname=formatteddate.strftime("%A").lower()
+    cleantitle = subjectslug.strip()
+    attendancevalue=attendance.lower().strip() if attendance else "notmarked"
+    
+    examperiods=[
+        {
+        "slot": i+1,
+        "subject": cleantitle,
+        "attendance": attendancevalue,
+        "source": "useroverride",
+        }
+        for i in range(6)
+    ]
+
+    calendar[targetdate]["day"]=dayname
+    calendar[targetdate]["status"]="exam"
+    calendar[targetdate]["reason"]=f"Exam: {cleantitle}"
+    calendar[targetdate]["periods"]=examperiods
+
+    studentobj.update({f"studentcalendar.{targetdate}": calendar[targetdate]})
+    return True
 
 #calculates the total conducted and attended hours per subject by considering both marked and unmarked periods. returns to 'calculateattendence()'
 def subjectreport(attendence: dict, calender: dict, today: date):
@@ -149,7 +189,7 @@ def subjectreport(attendence: dict, calender: dict, today: date):
 
     for datestr,day, in calender.items():
         currentdate=date.fromisoformat(datestr)
-        if currentdate<today and day.get("status")=="working":
+        if currentdate<today and day.get("status") in ["working", "exam"]:
             for period in day.get("periods", []):
                 subject=period.get("subject","")
                 if not subject or subject=="free":
@@ -185,7 +225,7 @@ def remaininghours(calendar: dict, fromdate: date, subjectkeylist: List) -> Dict
 
     for datestr,day in calendar.items():
         formatteddate=date.fromisoformat(datestr)
-        if formatteddate>=fromdate and day.get("status")=="working":
+        if formatteddate>=fromdate and day.get("status") in ["working", "exam"]:
             for period in day.get("periods",[]):
                 subject=period.get("subject")
                 if subject and subject=="free":
