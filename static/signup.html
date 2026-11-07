@@ -150,17 +150,43 @@
       setTimeout(() => toast.classList.add('hidden'), 4000);
     }
 
-    function handleSignupSubmit(e) {
+    async function handleSignupSubmit(e) {
       e.preventDefault();
-      const u = document.getElementById('signup-username').value.trim();
-      const p = document.getElementById('signup-password').value.trim();
+      const username = document.getElementById('signup-username').value.trim();
+      const password = document.getElementById('signup-password').value.trim();
+      const btn = e.target.querySelector('button[type="submit"]');
 
-      if (!u || !p) return;
+      if (!username || !password) return;
 
-      showToast("Account created! Connecting Linways portal...");
-      setTimeout(() => {
-        window.location.href = "/connect";
-      }, 700);
+      btn.disabled = true;
+      btn.textContent = "Creating Account...";
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          // Store token in browser storage
+          localStorage.setItem('linwise_token', data.token);
+          localStorage.setItem('linwise_username', data.username);
+          showToast("Account created! Redirecting to Linways setup...");
+          setTimeout(() => {
+            window.location.href = "/connect";
+          }, 800);
+        } else {
+          showToast(data.detail || "Signup failed. Try a different username.", true);
+          btn.disabled = false;
+          btn.textContent = "Signup";
+        }
+      } catch (err) {
+        showToast("Network error. Ensure your server is active.", true);
+        btn.disabled = false;
+        btn.textContent = "Signup";
+      }
     }
   </script>
 </body>

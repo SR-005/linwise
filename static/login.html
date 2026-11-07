@@ -150,17 +150,48 @@
       setTimeout(() => toast.classList.add('hidden'), 4000);
     }
 
-    function handleLoginSubmit(e) {
+    async function handleLoginSubmit(e) {
       e.preventDefault();
-      const u = document.getElementById('login-username').value.trim();
-      const p = document.getElementById('login-password').value.trim();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      const btn = e.target.querySelector('button[type="submit"]');
 
-      if (!u || !p) return;
+      if (!username || !password) return;
 
-      showToast("Logging in...");
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 700);
+      btn.disabled = true;
+      btn.textContent = "Logging In...";
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          localStorage.setItem('linwise_token', data.token);
+          localStorage.setItem('linwise_username', data.username);
+          showToast("Welcome back! Redirecting...");
+
+          setTimeout(() => {
+            // If they haven't connected Linways yet, guide them to /connect first
+            if (!data.linwaysconnected) {
+              window.location.href = "/connect";
+            } else {
+              window.location.href = "/";
+            }
+          }, 700);
+        } else {
+          showToast(data.detail || "Invalid username or password.", true);
+          btn.disabled = false;
+          btn.textContent = "Login";
+        }
+      } catch (err) {
+        showToast("Network connection error.", true);
+        btn.disabled = false;
+        btn.textContent = "Login";
+      }
     }
   </script>
 </body>

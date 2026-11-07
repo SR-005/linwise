@@ -156,37 +156,56 @@
       setTimeout(() => toast.classList.add('hidden'), 4000);
     }
 
+    // Guard: Redirect back to login if user visits /connect directly without being authenticated
+    const token = localStorage.getItem('linwise_token');
+    if (!token) {
+      window.location.href = "/login";
+    }
+
     async function handleConnectSubmit(e) {
       e.preventDefault();
       const studentId = document.getElementById('linways-username').value.trim();
       const password = document.getElementById('linways-password').value.trim();
+      const btn = document.getElementById('connect-btn');
       const btnText = document.getElementById('connect-btn-text');
       const spinner = document.getElementById('connect-spinner');
 
       if (!studentId || !password) return;
 
+      btn.disabled = true;
       btnText.textContent = "Verifying with Linways...";
       spinner.classList.remove('hidden');
 
       try {
-        const res = await fetch('/api/sync', { method: 'POST' });
+        const res = await fetch('/api/auth/connectlinways', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            studentid: studentId,
+            password: password
+          })
+        });
         const data = await res.json();
 
         if (res.ok) {
-          showToast("Connected to Linways successfully! Loading workspace...");
+          showToast("Connected to Linways! Synchronizing initial workspace...");
           setTimeout(() => {
             window.location.href = "/";
-          }, 900);
+          }, 1000);
         } else {
-          showToast(data.detail || "Linways authentication failed. Check credentials.", true);
+          showToast(data.detail || "Linways verification failed. Check credentials.", true);
+          btn.disabled = false;
           btnText.textContent = "Connect";
           spinner.classList.add('hidden');
         }
       } catch (err) {
-        showToast("Error connecting to server. Taking you to dashboard...", true);
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 1200);
+        showToast("Network error occurred during connection.", true);
+        btn.disabled = false;
+        btnText.textContent = "Connect";
+        spinner.classList.add('hidden');
       }
     }
   </script>
