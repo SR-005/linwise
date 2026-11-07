@@ -130,6 +130,11 @@ class TimetableEditRequest(BaseModel):
     period: str
     subject: str
 
+class ExamDayRequest(BaseModel):
+    date: str
+    subject: str
+    attendance: str="notmarked"
+
 class ChatRequest(BaseModel):
     message: str
     sessionid: Optional[str] = "defaultuser"
@@ -158,11 +163,9 @@ def getcurrentuser(authorization: str=Header(None)):
 def login_page():
   return FileResponse("static/login.html")
 
-
 @app.get("/signup")
 def signup_page():
   return FileResponse("static/signup.html")
-
 
 @app.get("/connect")
 def connect_page():
@@ -275,6 +278,7 @@ def apiedittimetable(req: TimetableEditRequest):
     if not success:
         raise HTTPException(status_code=400, detail="Failed to update timetable period.")
     return {"success": True, "day": req.day, "period": req.period, "subject": req.subject}
+
 
 
 #to mark any unmarked attendence slots
