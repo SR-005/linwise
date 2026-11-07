@@ -34,7 +34,6 @@ lockeddate="2026/10/19"
 
 #creating linways session using POST request
 def linwayslogin(studentid: str, password: str) -> httpx.Client:
-
     #headers for http post request to linways 
     headers={
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
@@ -50,6 +49,8 @@ def linwayslogin(studentid: str, password: str) -> httpx.Client:
     }
 
     response=client.post(LOGINURL,data=payload)      #submitting the POST Request
+    print(response)
+
 
     if response.status_code==200:
         return client
@@ -143,7 +144,11 @@ def getcurrentuser(authorization: str=Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    token=authorization.split[1]
+    parts=authorization.split()
+    if len(parts)!=2 or parts[0].lower()!="bearer":
+        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+
+    token=parts[1]
     username=auth.decodeaccesstoken(token)
     if not username:
         raise HTTPException(status_code=401, detail="Invalid or expired session")
@@ -211,6 +216,7 @@ def apilogin(req: LoginRequest):
 @app.post("/api/auth/connectlinways")
 def apiconnectlinways(req: ConnectLinwaysRequest, authorization: str=Header(None)):
     username=getcurrentuser(authorization)
+
     session=linwayslogin(req.studentid, req.password)
     if not session:
         raise HTTPException(status_code=400, detail="Invalid Linways Student ID or Password")
