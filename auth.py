@@ -48,7 +48,7 @@ def decodeaccesstoken(token) -> str | None:
       return None
 
     tokenbytes=tokenstr.encode("utf-8")
-    payload=jwt.decode(token_bytes, str(SECRETKEY), algorithms=[algorithm])
+    payload=jwt.decode(tokenbytes, str(SECRETKEY), algorithms=[algorithm])
 
     username=payload.get("sub")
     print(f"Successfully decoded token for user: {username}")
