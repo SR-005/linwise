@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta
 import jwt
+import bcrypt
 from passlib.context import CryptContext
 
 SECRETKEY=os.getenv("JWT_SECRET_KEY", "linwise-super-secret-key-2026")
@@ -9,10 +10,13 @@ algorithm="HS256"
 pwdcontext=CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hashpassword(password: str)->str:
-    return pwdcontext.hash(password)
+    pwdbytes=password.encode("utf-8")
+    salt=bcrypt.gensalt()
+    return bcrypt.hashpw(pwdbytes, salt).decode("utf-8")
 
 def verifypassword(plainpassword: str, hashedpassword: str)-> bool:
-    return(plainpassword, hashedpassword)
+    pwdbytes=plainpassword.encode("utf-8")
+    return bcrypt.checkpw(pwdbytes, hashedpassword.encode("utf-8"))
 
 def createaccesstoken(username: str)->str:
     expire=datetime.utcnow()+timedelta(days=14)
