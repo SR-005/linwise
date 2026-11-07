@@ -375,7 +375,7 @@ def editoverrides(studentid: str):
     overriddendates={}
     for datestr in sorted(calendar.keys()):
         day=calendar[datestr]
-        if day.get("status")=="working":
+        if day.get("status") in ["working", "exam"]:
             slots=[
                 period for period in day.get("periods",[])
                 if period.get("source")=="useroverride"
