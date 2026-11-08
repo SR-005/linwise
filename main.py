@@ -105,9 +105,6 @@ def attendence(session, studentid: str):
     #function which takes the html and parses to tables using pandas
     df=attendenceparser(studentid,response.text)
 
-def initialtimetable(studentid: str):
-    timetableparser(studentid, r"media/timetable.jpeg")
-
 class RegisterRequest(BaseModel):
     username: str
     password: str
@@ -310,6 +307,29 @@ def apigetcalendar():
     studentdata=studentdetails.to_dict()
     calendar=studentdata.get("studentcalendar", {})
     return {"calendar": calendar}
+
+@app.post("/api/upload/timetable")
+async def uploadctimetable(file: UploadFile = File(...)):
+    temporarydir="media"
+    os.makedir(temporarydir, exist_ok=True)
+    filepath=os.path.join(temporarydir, file.filename)
+
+    try: 
+        with open(filepath,"wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        timetableparser(studentid, filepath)
+
+        return {
+            "success": True,
+            "message": f"Successfully updated timetable from {file.filename}"
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to process timetable: {str(e)}")
+    finally:
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
 @app.get("/api/timetable")
 def apigettimetable():
