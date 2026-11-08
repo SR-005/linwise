@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi import UploadFile, File
 import uvicorn
 from pydantic import BaseModel, Field
 import httpx
@@ -8,7 +9,9 @@ from firebase import db
 
 import httpx
 
+import os
 import json
+import shutil
 import pandas as pd
 from datetime import date
 from typing import List, Optional, Dict, Any
@@ -57,8 +60,8 @@ def linwayslogin(studentid: str, password: str) -> httpx.Client:
     else:
         return None
 
-def getcalendar(session, studentid: str, update: bool):
-    semstart=calenderparser(studentid, r"media\calender.pdf", "B. Tech S3/S5/S7")
+def getcalendar(session, studentid: str, filepath: str):
+    semstart=calenderparser(studentid, filepath, "B. Tech S3/S5/S7")
 
     #semstart="2026-07-01"
     today=date.today()
@@ -83,11 +86,7 @@ def getcalendar(session, studentid: str, update: bool):
     response.raise_for_status()
 
     history=periodattendenceparser(response.text)
-
-    if update:
-        updateattendence(studentid, history)
-    else:
-        buildcalendar(studentid, history)
+    buildcalendar(studentid, history)
 
 #all-in-all attendence function
 def attendence(session, studentid: str):
@@ -267,6 +266,39 @@ async def savesettings(payload: SettingsPayload):
     if not success:
         raise HTTPException(status_code=400, detail="Failed to update settings")
     return {"success": True, "settings": computations.getstudentsettings(studentid)}
+
+@app.get("/api/profile")
+@app.get("/api/user")
+async def getuserprofile():
+  studentobj, studentdetails=getstudentdata(studentid)
+  if not studentdetails.exists:
+    raise HTTPException(status_code=404, detail="Student record not found")
+
+  studentdata=studentdetails.to_dict()
+  return {"name": studentdata.get("name", "Student"), "username": studentid}
+
+@app.post("/api/upload/calendar")
+async def uploadcalendar(file: UploadFile = File(...)):
+    temporarydir="media"
+    os.makedir(temporarydir, exist_ok=True)
+    filepath=os.path.join(temporarydir, file.filename)
+
+    try: 
+        with open(filepath,"wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        session=linwayslogin(studentid,password)
+        getcalendar(session, studentid, filepath)
+
+        return {
+            "success": True, 
+            "message": f"Successfully parsed and updated calendar from {file.filename}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to process calendar file: {str(e)}")
+    finally:
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
 #to fetch and display calendar 
 @app.post("/api/calendar")
