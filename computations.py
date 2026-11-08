@@ -1,5 +1,5 @@
 import math
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import date, timedelta, datetime
 import math
 import re
@@ -8,6 +8,49 @@ import parsers
 
 lockeddate=date(2026, 10, 19)
 tomorrowdate=lockeddate+timedelta(days=1)
+studentid="P012CSOM23"
+
+def getstudentsettings(studenid: str)->Dict[str, Any]:
+    studentobj,studentdetails=getstudentdata(studentid)
+    if not studentdetails.exists:
+        return {
+            "startdate": None,
+            "enddate": None,
+            "attendancethreshold": 75.0,
+        }
+
+    studentdata=studentdetails.to_dict()
+    calendar=studentdata.get("studentcalendar",{})
+    settings=studentdata.get("settings",{})
+
+    calendardates=sorted(calendar.keys())
+    defaultstart=calendardates[0] if calendardates else None
+    defaultend=calendardates[-1] if calendardates else None
+
+    print(f"Start Date: {defaultstart}")
+    print(f"End Date: {defaultend}")
+
+    return {
+        "startdate": settings.get("startdate") or defaultstart,
+        "enddate": settings.get("enddate") or defaultend,
+        "attendancethreshold": float(settings.get("attendancethreshold", 75.0)),
+    }
+
+def updatestudentsettings(studenid: str, startdate: Optional[str]=None, enddate: Optional[str]=None,attendancethreshold: Optional[float]=None,)->bool:
+    studentobj,studentdetails=getstudentdata(studentid)
+    if not studentdetails.exists:
+        return False
+
+    currentsettings=getstudentsettings(studenid)
+
+    updatedsettings={
+        "startdate": startdate if startdate else currentsettings["startdate"],
+        "enddate": enddate if enddate else currentsettings["enddate"],
+        "attendancethreshold":float(attendancethreshold) if attendancethreshold else currentsettings["attendancethreshold"]
+    }
+
+    studentobj.update({"settings": updatedsettings})
+    return True
 
 #for normalizing subject names by stripping unwanted 
 def normalizesubjectnames(name:str) -> str:
@@ -220,11 +263,17 @@ def subjectreport(attendence: dict, calender: dict, today: date):
     return effectiveattendence
 
 #calculates how many hours will we get for per subject from tomorrow. returns to 'calculateattendence()'
-def remaininghours(calendar: dict, fromdate: date, subjectkeylist: List) -> Dict[str, int]:
+def remaininghours(calendar: dict, fromdate: date, subjectkeylist: List, enddate: Optional[date] = None,) -> Dict[str, int]:
     remaining={}
 
     for datestr,day in calendar.items():
         formatteddate=date.fromisoformat(datestr)
+
+        if formatteddate < fromdate:
+            continue
+        if enddate and formatteddate > enddate:
+            continue
+
         if formatteddate>=fromdate and day.get("status") in ["working", "exam"]:
             for period in day.get("periods",[]):
                 subject=period.get("subject")
@@ -257,8 +306,12 @@ def calculateattendence(studentid: str):
     today=date.today()
     tomorrow=today+timedelta(days=1)
 
+    settings=getstudentsettings(studentid)
+    attendancethreshold=settings["attendancethreshold"]/100.0
+    enddate=(date.fromisoformat(settings["enddate"]) if settings["enddate"] else None)
+
     currentattendence=subjectreport(attendence,calendar,lockeddate)
-    remaining=remaininghours(calendar,tomorrowdate, list(currentattendence.keys()))
+    remaining=remaininghours(calendar,tomorrowdate, list(currentattendence.keys()), enddate)
 
     print("\n" + "=" * 88)
     print(f"{'SUBJECT':<30} | {'CURR %':<8} | {'LEFT':<5} | {'PROJ TOT':<9} | {'MAX BUNKS':<12}")
@@ -275,7 +328,7 @@ def calculateattendence(studentid: str):
         if totalhours==0:
             continue
 
-        minrequired=math.ceil(0.75*totalhours)
+        minrequired=math.ceil(attendancethreshold*totalhours)
         maxpossibleattended=attended+hoursleft
         bunksleft=maxpossibleattended-minrequired
 
