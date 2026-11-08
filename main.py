@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Header
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import httpx
 from firebase import db
 
@@ -120,6 +120,11 @@ class LoginRequest(BaseModel):
 class ConnectLinwaysRequest(BaseModel):
     studentid: str
     password: str
+
+class SettingsPayload(BaseModel):
+    startdate: Optional[str]=Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    enddate: Optional[str]=Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    attendancethreshold: Optional[float]=Field(None, ge=50.0, le=100.0)
 
 class AttendenceStatusRequest(BaseModel):
     date: str
@@ -251,6 +256,17 @@ def apistatus(authorization: str=Header(None)):
         "linways_connected": userdata.get("linways_connected", False),
         "studentid": userdata.get("studentid")
     }
+
+@app.get("/api/settings")
+async def get_settings():
+    return computations.getstudentsettings(studentid)
+
+@app.post("/api/settings")
+async def savesettings(payload: SettingsPayload):
+    success=computations.updatestudentsettings(studentid, payload.startdate, payload.enddate, payload.attendancethreshold)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to update settings")
+    return {"success": True, "settings": computations.getstudentsettings(studentid)}
 
 #to fetch and display calendar 
 @app.post("/api/calendar")
