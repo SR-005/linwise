@@ -60,10 +60,23 @@ def linwayslogin(studentid: str, password: str) -> httpx.Client:
     else:
         return None
 
-def getcalendar(session, studentid: str, filepath: str):
-    semstart=calenderparser(studentid, filepath, "B. Tech S3/S5/S7")
+def attendence(session, studentid: str):
+    subjectwiseurl=f"{BASEURL}/student/attendance/ajax/ajax_subjectwise_attendance.php?action=GET_REPORT"
 
-    #semstart="2026-07-01"
+    #header for POST Request to fetch attendence details
+    ajaxheaders={
+        "X-Requested-With": "XMLHttpRequest",
+        "Referer": f"{BASEURL}/student/student.php?menu=attendance",
+        "Accept": "*/*"
+    }
+
+    response=session.get(subjectwiseurl,headers=ajaxheaders)
+    print(f"Response Code: {response.status_code}")
+
+    #function which takes the html and parses to tables using pandas
+    df=attendenceparser(studentid,response.text)
+
+def periodattendancefetch(session, semstart):
     today=date.today()
     today=today.strftime("%Y/%m/%d")
     semid="7"
@@ -84,26 +97,17 @@ def getcalendar(session, studentid: str, filepath: str):
 
     response=session.get(baseurl, params=params, headers=headers)
     response.raise_for_status()
+    return response
+
+def getcalendar(session, studentid: str, filepath: str):
+    semstart=calenderparser(studentid, filepath, "B. Tech S3/S5/S7")
+    #semstart="2026-07-01"
+
+    response=periodattendancefetch(session, semstart)
 
     history=periodattendenceparser(response.text)
     buildcalendar(studentid, history)
 
-#all-in-all attendence function
-def attendence(session, studentid: str):
-    subjectwiseurl=f"{BASEURL}/student/attendance/ajax/ajax_subjectwise_attendance.php?action=GET_REPORT"
-
-    #header for POST Request to fetch attendence details
-    ajaxheaders={
-        "X-Requested-With": "XMLHttpRequest",
-        "Referer": f"{BASEURL}/student/student.php?menu=attendance",
-        "Accept": "*/*"
-    }
-
-    response=session.get(subjectwiseurl,headers=ajaxheaders)
-    print(f"Response Code: {response.status_code}")
-
-    #function which takes the html and parses to tables using pandas
-    df=attendenceparser(studentid,response.text)
 
 class RegisterRequest(BaseModel):
     username: str
@@ -277,7 +281,7 @@ async def getuserprofile():
 @app.post("/api/upload/calendar")
 async def uploadcalendar(file: UploadFile = File(...)):
     temporarydir="media"
-    os.makedir(temporarydir, exist_ok=True)
+    os.makedirs(temporarydir, exist_ok=True)
     filepath=os.path.join(temporarydir, file.filename)
 
     try: 
@@ -311,7 +315,7 @@ def apigetcalendar():
 @app.post("/api/upload/timetable")
 async def uploadctimetable(file: UploadFile = File(...)):
     temporarydir="media"
-    os.makedir(temporarydir, exist_ok=True)
+    os.makedirs(temporarydir, exist_ok=True)
     filepath=os.path.join(temporarydir, file.filename)
 
     try: 
