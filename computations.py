@@ -10,7 +10,7 @@ lockeddate=date(2026, 10, 19)
 tomorrowdate=lockeddate+timedelta(days=1)
 studentid="P012CSOM23"
 
-def getstudentsettings(studenid: str)->Dict[str, Any]:
+def getstudentsettings(studentid: str)->Dict[str, Any]:
     studentobj,studentdetails=getstudentdata(studentid)
     if not studentdetails.exists:
         return {
