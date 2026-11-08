@@ -127,7 +127,8 @@ def timetableparser(studentid: str, imagepath: str):
             """
 
     client=genai.Client()
-    img=Image.open(imagepath)
+    with Image.open(imagepath) as img:
+        img.load()
 
     response=client.models.generate_content(
         model="gemini-3.1-flash-lite",
@@ -140,7 +141,6 @@ def timetableparser(studentid: str, imagepath: str):
     )
     
     timetable=json.loads(response.text)
-    edittimetable(timetable,subjects)
     savetimetable(studentid,timetable)
 
 
@@ -454,7 +454,7 @@ def editoverrides(studentid: str):
 def evensaturdays(currendate: date) -> bool:
     if currendate.weekday()!=5:
         return False
-    saturdayindex=(currendate-1)//7 + 1
+    saturdayindex=(currendate.day-1)//7 + 1
     return saturdayindex in (2,4)
 
 def buildcalendar(studentid: str, attendencehistory: Dict[str, List[dict]]):
@@ -494,8 +494,8 @@ def buildcalendar(studentid: str, attendencehistory: Dict[str, List[dict]]):
                 "reason": "Sunday"
             }
 
-        if evensaturdays(formatteddate):
-            saturdayindex=(formatteddate-1)//7 + 1          #to know if it is 2nd or 4th saturday
+        elif evensaturdays(currentdate):
+            saturdayindex=(currentdate.day-1)//7 + 1          #to know if it is 2nd or 4th saturday
             fullcalender[formatteddate]={
                 "day": "saturday",
                 "status": "holiday",
@@ -548,7 +548,6 @@ def buildcalendar(studentid: str, attendencehistory: Dict[str, List[dict]]):
                     "periods": structedperiods,
                     "reason": ""
                 }    
-
         currentdate=currentdate+timedelta(days=1)
 
     studentobj.set({"studentcalendar": fullcalender}, merge=True)
