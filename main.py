@@ -10,8 +10,9 @@ from firebase import db
 import httpx
 
 import os
-import json
+import gc
 import shutil
+import time
 import pandas as pd
 from datetime import date
 from typing import List, Optional, Dict, Any
@@ -287,6 +288,7 @@ async def uploadcalendar(file: UploadFile = File(...)):
     try: 
         with open(filepath,"wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
+        file.file.close()
 
         session=linwayslogin(studentid,password)
         getcalendar(session, studentid, filepath)
@@ -298,8 +300,14 @@ async def uploadcalendar(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to process calendar file: {str(e)}")
     finally:
-        if os.path.exists(filepath):
-            os.remove(filepath)
+        gc.collect()
+        for _ in range(5):
+            try:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                    break
+            except PermissionError:
+                time.sleep(0.1)
 
 #to fetch and display calendar 
 @app.post("/api/calendar")
@@ -313,7 +321,7 @@ def apigetcalendar():
     return {"calendar": calendar}
 
 @app.post("/api/upload/timetable")
-async def uploadctimetable(file: UploadFile = File(...)):
+async def uploadtimetable(file: UploadFile = File(...)):
     temporarydir="media"
     os.makedirs(temporarydir, exist_ok=True)
     filepath=os.path.join(temporarydir, file.filename)
@@ -321,6 +329,7 @@ async def uploadctimetable(file: UploadFile = File(...)):
     try: 
         with open(filepath,"wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
+        file.file.close()
 
         timetableparser(studentid, filepath)
 
@@ -332,8 +341,14 @@ async def uploadctimetable(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to process timetable: {str(e)}")
     finally:
-        if os.path.exists(filepath):
-            os.remove(filepath)
+        gc.collect()
+        for _ in range(5):
+            try:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                    break
+            except PermissionError:
+                time.sleep(0.1)
 
 @app.get("/api/timetable")
 def apigettimetable():
