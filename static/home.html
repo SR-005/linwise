@@ -18,7 +18,7 @@
           fontFamily: {
             sans: ['Agrandir', 'sans-serif'],
             mono: ['Agrandir Wide', 'Agrandir', 'sans-serif'],
-            grand: ['Agrandir Grand Heavy', 'Agrandir Grand', 'Agrandir', 'sans-serif'],
+            grand: ['Agrandir Grand Heavy', 'Agrandir Grand', 'sans-serif'],
             wide: ['Agrandir Wide', 'Agrandir', 'sans-serif'],
           }
         }
@@ -27,7 +27,7 @@
   </script>
 
   <style>
-    /* Strict global Agrandir font locking */
+    /* Strict global Agrandir font locking across all elements */
     *, html, body, button, input, select, textarea, table, th, td, code, pre {
       font-family: 'Agrandir', sans-serif !important;
     }
@@ -44,9 +44,9 @@
 
     /* Core Dark Glassmorphic Utilities */
     .glass-surface {
-      background: rgba(18, 20, 28, 0.45);
-      backdrop-filter: blur(28px) saturate(190%);
-      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      background: rgba(18, 20, 28, 0.55);
+      backdrop-filter: blur(32px) saturate(190%);
+      -webkit-backdrop-filter: blur(32px) saturate(190%);
       border: 1px solid rgba(255, 255, 255, 0.08);
       box-shadow: 
         inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
@@ -77,6 +77,29 @@
       box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.16), 0 8px 20px -4px rgba(0, 0, 0, 0.4);
     }
 
+    .glass-input {
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .glass-input:focus {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(99, 102, 241, 0.6);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+    }
+
+    /* Distinct Slider Holder Container */
+    .slider-holder-surface {
+      background: rgba(26, 28, 38, 0.9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 12px 30px -10px rgba(0, 0, 0, 0.6);
+    }
+
     /* Active nav pill gradient + neon edge light */
     .active-nav-glow {
       background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0%, rgba(67, 56, 202, 0.35) 65%, rgba(99, 102, 241, 0.3) 100%);
@@ -84,13 +107,66 @@
       box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
     }
 
-    /* Custom refined scrollbar */
+    /* Prominent Slider Knob Styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.14);
+      border-radius: 9999px;
+      outline: none;
+      transition: background 0.2s;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #fbbf24;
+      border: 3px solid #08090d;
+      box-shadow: 0 0 14px rgba(251, 191, 36, 0.7);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover,
+    input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.25);
+      box-shadow: 0 0 22px rgba(251, 191, 36, 1);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #fbbf24;
+      border: 3px solid #08090d;
+      box-shadow: 0 0 14px rgba(251, 191, 36, 0.7);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    input[type="range"]::-moz-range-thumb:hover,
+    input[type="range"]::-moz-range-thumb:active {
+      transform: scale(1.25);
+      box-shadow: 0 0 22px rgba(251, 191, 36, 1);
+    }
+
+    /* Date picker icon inversion */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1) opacity(0.5);
+      cursor: pointer;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator:hover {
+      filter: invert(1) opacity(0.9);
+    }
+
+    /* Refined scrollbar */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 9999px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
 
-    /* Vertical text for side calendar dock */
+    /* Vertical text for side docks */
     .vertical-writing-lr {
       writing-mode: vertical-lr;
       text-orientation: mixed;
@@ -100,7 +176,7 @@
 </head>
 <body class="h-full flex overflow-hidden antialiased bg-[#08090d] text-slate-100 relative">
 
-  <!-- ================= AMBIENT BACKGROUND GLOW (Provides light to refract through glass) ================= -->
+  <!-- ================= AMBIENT BACKGROUND GLOW ================= -->
   <div class="fixed top-[-15%] left-[-10%] w-[650px] h-[650px] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none z-0"></div>
   <div class="fixed top-[30%] right-[15%] w-[550px] h-[550px] bg-purple-600/10 rounded-full blur-[160px] pointer-events-none z-0"></div>
   <div class="fixed bottom-[-15%] left-[25%] w-[700px] h-[700px] bg-blue-700/10 rounded-full blur-[180px] pointer-events-none z-0"></div>
@@ -109,7 +185,53 @@
   <!-- Notification Toast -->
   <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl glass-surface text-xs font-medium shadow-2xl transition font-wide"></div>
 
-  <!-- ================= LEFT SIDEBAR (Dark Glassmorphism) ================= -->
+  <!-- ================= UPLOAD OVERWRITE WARNING MODAL ================= -->
+  <div id="uploadConfirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md select-none">
+    <div class="w-full max-w-md glass-surface rounded-3xl p-6 sm:p-8 space-y-6 border border-white/[0.12] shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header & Icon -->
+      <div class="flex items-start gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400 shrink-0">
+          <i class="ph-bold ph-warning text-2xl"></i>
+        </div>
+        <div class="space-y-1">
+          <h3 id="uploadConfirmTitle" class="text-lg font-wide font-bold text-white tracking-wide">
+            Overwrite Schedule?
+          </h3>
+          <span class="text-[10px] font-wide font-bold uppercase tracking-wider text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
+            Action Irreversible
+          </span>
+        </div>
+      </div>
+
+      <!-- Specific Contextual Warning Message -->
+      <p id="uploadConfirmMessage" class="text-xs sm:text-sm font-wide text-zinc-300 leading-relaxed">
+        <!-- Injected dynamically via JS -->
+      </p>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-2 font-wide">
+        <button 
+          type="button"
+          onclick="closeUploadConfirmModal()" 
+          class="px-5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-semibold transition"
+        >
+          Cancel
+        </button>
+        <button 
+          type="button"
+          id="confirmUploadBtn"
+          onclick="proceedUpload()" 
+          class="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-wide font-bold transition shadow-lg shadow-rose-950/50 hover:scale-[1.02] active:scale-[0.98]"
+        >
+          Reset & Upload
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= LEFT SIDEBAR ================= -->
   <aside class="w-56 glass-surface border-r border-white/[0.08] flex flex-col justify-between py-6 px-3.5 shrink-0 z-30 select-none relative">
     <div class="space-y-6">
       <!-- Linwise Logo -->
@@ -120,23 +242,9 @@
         <span class="text-sm font-grand font-bold tracking-tight text-white drop-shadow-sm">Linwise</span>
       </div>
 
-      <!-- Quick Search Bar -->
-      <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.07] text-xs text-zinc-400 backdrop-blur-md shadow-inner">
-        <div class="flex items-center gap-2">
-          <i class="ph ph-magnifying-glass text-sm text-zinc-500"></i>
-          <input type="text" placeholder="Search..." class="bg-transparent text-xs text-zinc-300 placeholder-zinc-500 focus:outline-none w-20 font-wide">
-        </div>
-        <div class="flex items-center gap-1 font-mono text-[10px] bg-white/[0.06] border border-white/[0.08] px-1.5 py-0.5 rounded text-zinc-400">
-          <span>⌘</span>
-          <span>F</span>
-        </div>
-      </div>
-
       <!-- Navigation Links -->
       <nav class="space-y-5 font-wide">
-        <!-- Main Section -->
         <div>
-          <span class="text-[10px] font-grand font-bold tracking-wider text-zinc-500 uppercase px-2 mb-2 block">Main</span>
           <div class="space-y-1">
             <button onclick="switchView('chat')" id="nav-chat" class="w-full relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition active-nav-glow text-white shadow-sm overflow-hidden">
               <i class="ph-bold ph-chat-circle-dots text-sm text-indigo-300"></i>
@@ -144,35 +252,25 @@
               <span id="nav-chat-pill" class="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-gradient-to-b from-blue-400 to-indigo-500 shadow-[0_0_12px_#6366f1]"></span>
             </button>
 
-            <button onclick="switchView('timetable')" id="nav-timetable" class="w-full relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition text-zinc-400 hover:text-white hover:bg-white/[0.04]">
-              <i class="ph-bold ph-table text-sm text-zinc-400"></i>
-              <span>Timetable</span>
-              <span id="nav-timetable-pill" class="hidden absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-gradient-to-b from-blue-400 to-indigo-500 shadow-[0_0_12px_#6366f1]"></span>
-            </button>
-          </div>
-        </div>
-
-        <!-- System Section -->
         <div>
-          <span class="text-[10px] font-grand font-bold tracking-wider text-zinc-500 uppercase px-2 mb-2 block">System</span>
           <div class="space-y-1">
-            <button onclick="switchView('profile')" id="nav-profile" class="w-full relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition text-zinc-400 hover:text-white hover:bg-white/[0.04]">
-              <i class="ph-bold ph-user text-sm text-zinc-400"></i>
-              <span>Profile</span>
-              <span id="nav-profile-pill" class="hidden absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-gradient-to-b from-blue-400 to-indigo-500 shadow-[0_0_12px_#6366f1]"></span>
+            <button onclick="switchView('settings')" id="nav-settings" class="w-full relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition text-zinc-400 hover:text-white hover:bg-white/[0.04]">
+              <i class="ph-bold ph-gear text-sm text-zinc-400"></i>
+              <span>Settings</span>
+              <span id="nav-settings-pill" class="hidden absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-gradient-to-b from-blue-400 to-indigo-500 shadow-[0_0_12px_#6366f1]"></span>
             </button>
           </div>
         </div>
       </nav>
     </div>
 
-    <!-- Bottom Status Card -->
+    <!-- Bottom Dynamic Status Card -->
     <div class="px-3 py-2.5 rounded-xl glass-card text-[11px] font-wide text-zinc-400 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]"></span>
-        <span class="text-[10px] text-zinc-300">S7 CS</span>
+        <span class="text-[10px] text-zinc-300 truncate max-w-[90px]" id="sidebar-semester-branch">--</span>
       </div>
-      <span class="text-[10px] font-grand font-bold text-indigo-300">AISAT</span>
+      <span class="text-[10px] font-grand font-bold text-indigo-300 truncate max-w-[65px]" id="sidebar-college-short">--</span>
     </div>
   </aside>
 
@@ -183,7 +281,7 @@
     <div id="view-chat" class="flex-1 flex flex-col h-full overflow-hidden">
       <!-- Messages Stream -->
       <div id="chat-messages" class="flex-1 overflow-y-auto px-6 lg:px-20 py-8 space-y-4 text-xs font-wide">
-        <!-- Messages appended dynamically -->
+        <!-- Messages rendered dynamically -->
       </div>
 
       <!-- Bottom Chat Input Bar -->
@@ -207,20 +305,231 @@
       </div>
     </div>
 
-    <!-- ----------------- VIEW 2: TIMETABLE ----------------- -->
-    <div id="view-timetable" class="hidden flex-1 overflow-y-auto p-6 lg:p-10 flex flex-col items-center justify-start">
-      <div class="w-full max-w-7xl glass-surface rounded-3xl p-8 lg:p-10 shadow-2xl space-y-8">
-        
-        <!-- Timetable Header -->
-        <div class="flex items-center justify-between border-b border-white/[0.08] pb-5">
-          <div class="flex items-center gap-3">
-            <div class="w-3 h-8 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 shadow-[0_0_12px_rgba(251,191,36,0.4)]"></div>
-            <h2 class="text-3xl font-grand font-extrabold text-amber-400 tracking-wider">CSE B</h2>
+    <!-- ----------------- VIEW 2: SETTINGS ----------------- -->
+    <div id="view-settings" class="hidden flex-1 overflow-y-auto p-6 sm:p-10 flex flex-col items-center justify-start">
+      <div class="w-full max-w-5xl space-y-6">
+
+        <!-- Top Profile Header (Dynamically Injected) -->
+        <div class="flex items-center gap-5 px-2 py-1 select-none">
+          <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-black border border-white/[0.1] shadow-2xl flex items-center justify-center shrink-0">
+            <svg class="w-12 h-12 sm:w-14 sm:h-14 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path fill-rule="evenodd" d="M12 2a5 5 0 100 10 5 5 0 000-10zm-7 18a7 7 0 0114 0H5z" clip-rule="evenodd" />
+            </svg>
           </div>
-          <span class="text-3xl font-grand font-extrabold text-amber-400/90 bg-amber-400/10 px-4 py-1 rounded-xl border border-amber-400/20 backdrop-blur-md">S7</span>
+          <div class="space-y-1">
+            <h1 class="text-3xl sm:text-4xl font-wide font-bold text-white tracking-tight leading-none" id="user-fullname">
+              --
+            </h1>
+            <p class="text-xs sm:text-sm font-wide text-zinc-300">
+              Albertian Institute of Science and Technology
+            </p>
+          </div>
         </div>
 
-        <!-- Timetable Grid Container -->
+        <!-- Portal Sync Strip -->
+        <div class="glass-surface rounded-2xl px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-white/[0.08] shadow-xl">
+          <p class="text-xs sm:text-sm font-wide text-zinc-300 max-w-xl leading-relaxed">
+            Update Attendance Data from your linways portal for realtime calculations.
+          </p>
+          <button 
+            onclick="triggerPortalSync()" 
+            class="px-6 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-black font-wide font-bold text-xs sm:text-sm transition shadow-lg shrink-0 hover:scale-105 active:scale-95 flex items-center gap-2"
+          >
+            <i class="ph ph-arrows-clockwise text-sm" id="sync-icon"></i>
+            <span>Sync Now</span>
+          </button>
+        </div>
+
+        <!-- KTU Academic Calendar Upload Section (Below Sync) -->
+        <div class="glass-surface rounded-2xl px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-white/[0.08] shadow-xl">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <i class="ph-bold ph-calendar-plus text-base text-amber-400"></i>
+              <h3 class="text-sm font-wide font-bold text-white tracking-wide">KTU Academic Schedule</h3>
+            </div>
+            <p class="text-xs sm:text-sm font-wide text-zinc-400 max-w-xl leading-relaxed">
+              Upload the official KTU academic calendar (PDF, CSV, or JSON) to automatically generate default working days, exams, and holidays.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <input type="file" id="schedule-upload-input" class="hidden" accept=".pdf,.csv,.json" onchange="handleScheduleUpload(event)">
+            <button 
+              type="button"
+              onclick="promptUploadWarning('schedule')" 
+              class="px-5 py-2.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-white font-wide font-bold text-xs sm:text-sm transition shadow-lg flex items-center gap-2 hover:scale-105 active:scale-95"
+            >
+              <i class="ph-bold ph-upload-simple text-sm text-amber-400"></i>
+              <span>Upload Schedule</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Timetable Upload Section (Right Below KTU Schedule) -->
+        <div class="glass-surface rounded-2xl px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-white/[0.08] shadow-xl">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <i class="ph-bold ph-table text-base text-indigo-400"></i>
+              <h3 class="text-sm font-wide font-bold text-white tracking-wide">Weekly Timetable Schedule</h3>
+            </div>
+            <p class="text-xs sm:text-sm font-wide text-zinc-400 max-w-xl leading-relaxed">
+              Upload an updated timetable CSV or JSON preset to sync your daily class period slots.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <input type="file" id="timetable-upload-input" class="hidden" accept=".csv,.json" onchange="handleTimetableUpload(event)">
+            <button 
+              type="button"
+              onclick="promptUploadWarning('timetable')" 
+              class="px-5 py-2.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.12] text-white font-wide font-bold text-xs sm:text-sm transition shadow-lg flex items-center gap-2 hover:scale-105 active:scale-95"
+            >
+              <i class="ph-bold ph-upload-simple text-sm text-indigo-400"></i>
+              <span>Upload Timetable</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Main Dual-Column Cards Container -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+
+          <!-- Left Card: Credentials -->
+          <div class="glass-surface rounded-3xl p-7 sm:p-8 flex flex-col justify-between border border-white/[0.07] shadow-2xl min-h-[460px]">
+            <div class="space-y-6">
+              <h2 class="text-2xl font-wide font-extrabold text-rose-500 tracking-wider">
+                Credentials
+              </h2>
+
+              <div class="space-y-5 font-wide">
+                <div class="space-y-2">
+                  <label class="block text-xs font-wide text-zinc-300">Linways Username</label>
+                  <input 
+                    type="text" 
+                    id="cred-username" 
+                    disabled
+                    value=""
+                    class="w-full px-4 py-3.5 rounded-2xl glass-input text-xs sm:text-sm text-zinc-300 cursor-not-allowed opacity-80 font-wide select-none"
+                    placeholder="Username"
+                  />
+                </div>
+
+                <div class="space-y-2">
+                  <label class="block text-xs font-wide text-zinc-300">Linways Password</label>
+                  <input 
+                    type="password" 
+                    id="cred-password" 
+                    disabled
+                    value="••••••••••••"
+                    class="w-full px-4 py-3.5 rounded-2xl glass-input text-xs sm:text-sm text-zinc-300 cursor-not-allowed opacity-80 font-wide select-none"
+                    placeholder="••••••••••••"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-6">
+              <button 
+                type="button" 
+                onclick="window.location.href='/connect'"
+                class="w-full py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] text-zinc-200 hover:text-white font-wide font-semibold text-xs sm:text-sm transition shadow-lg active:scale-[0.99] flex items-center justify-center gap-2"
+              >
+                <span>Change Credentials</span>
+                <i class="ph-bold ph-arrow-right text-xs"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Card: Recalibration -->
+          <div class="glass-surface rounded-3xl p-7 sm:p-8 flex flex-col justify-between border border-white/[0.08] shadow-2xl min-h-[460px] relative overflow-hidden">
+            <div class="space-y-6">
+              <h2 class="text-2xl font-wide font-extrabold text-amber-400 tracking-wider">
+                Recalibration
+              </h2>
+
+              <div class="space-y-5 font-wide">
+                <div class="grid grid-cols-2 gap-3.5">
+                  <div class="space-y-1.5">
+                    <label class="block text-xs font-wide text-zinc-300">Semester Start Date</label>
+                    <input 
+                      type="date" 
+                      id="settingStartDate" 
+                      oninput="checkSettingsChanged()"
+                      onchange="checkSettingsChanged()"
+                      class="w-full px-3.5 py-3 rounded-2xl glass-input text-xs text-white focus:outline-none transition font-wide"
+                    />
+                  </div>
+                  <div class="space-y-1.5">
+                    <label class="block text-xs font-wide text-zinc-300">Semester End Date</label>
+                    <input 
+                      type="date" 
+                      id="settingEndDate" 
+                      oninput="checkSettingsChanged()"
+                      onchange="checkSettingsChanged()"
+                      class="w-full px-3.5 py-3 rounded-2xl glass-input text-xs text-white focus:outline-none transition font-wide"
+                    />
+                  </div>
+                </div>
+
+                <div class="space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <label class="block text-xs font-wide text-zinc-300">Attendance Threshold</label>
+                    <span id="thresholdValue" class="text-xs font-wide font-bold text-zinc-200 glass-input px-3 py-1 rounded-xl border border-white/[0.08]">75.0%</span>
+                  </div>
+
+                  <div class="p-7 sm:p-8 rounded-3xl slider-holder-surface flex flex-col justify-center space-y-4 shadow-2xl min-h-[175px]">
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs text-zinc-300 font-wide font-semibold tracking-wider">Slider</span>
+                      <span id="sliderLiveIndicator" class="text-xs font-wide font-bold text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-lg border border-amber-400/25">Current: 75.0%</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      id="settingThreshold" 
+                      min="50" 
+                      max="100" 
+                      step="0.5" 
+                      value="75"
+                      oninput="onThresholdSliderInput(this.value)"
+                      class="w-full cursor-pointer appearance-none" 
+                    />
+                    <div class="flex justify-between text-[11px] text-zinc-400 font-mono">
+                      <span>50%</span>
+                      <span class="text-amber-400 font-bold">75% (KTU Min)</span>
+                      <span>100%</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="pt-6">
+              <button 
+                id="save-settings-btn"
+                disabled
+                onclick="saveSettings()" 
+                class="w-full py-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.05] text-zinc-500 font-wide font-semibold text-xs sm:text-sm transition cursor-not-allowed opacity-50"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= RIGHT SLIDING TIMETABLE DRAWER ================= -->
+    <div id="timetable-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[760px] lg:w-[860px] glass-surface border-l border-white/[0.1] shadow-[-25px_0_60px_rgba(0,0,0,0.8)] z-40 transform translate-x-full transition-transform duration-300 flex flex-col">
+      <div class="px-6 py-4 border-b border-white/[0.08] flex items-center justify-between bg-black/20">
+        <div class="flex items-center gap-3">
+          <div class="w-3 h-7 rounded-full bg-gradient-to-b from-amber-400 to-amber-600 shadow-[0_0_12px_rgba(251,191,36,0.4)]"></div>
+          <h2 class="text-2xl font-grand font-extrabold text-amber-400 tracking-wider truncate max-w-[280px]" id="timetable-batch-title">Timetable</h2>
+        </div>
+        <button onclick="toggleTimetableDrawer(false)" class="text-zinc-400 hover:text-white transition p-1.5 rounded-lg hover:bg-white/[0.06]">
+          <i class="ph-bold ph-x text-base"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-6 space-y-6">
         <div class="overflow-x-auto rounded-2xl border border-white/[0.08] bg-black/30 backdrop-blur-md">
           <table class="w-full text-center border-collapse font-wide">
             <thead>
@@ -235,106 +544,17 @@
               </tr>
             </thead>
             <tbody id="timetable-tbody" class="divide-y divide-white/[0.06] text-sm font-wide">
-              <!-- Rendered via JS -->
             </tbody>
           </table>
         </div>
-
-        <!-- Bottom Timetable Action -->
-        <div class="pt-6 border-t border-white/[0.08] flex flex-col items-center text-center space-y-4 font-wide">
-          <p class="text-xs sm:text-sm text-zinc-400 max-w-xl">
-            If this timetable doesn't match your current schedule, you can either pick a preset or upload an entirely new one.
-          </p>
-          <div class="flex items-center gap-5">
-            <button class="px-7 py-3 rounded-xl bg-white hover:bg-zinc-200 text-black font-grand font-bold text-xs sm:text-sm transition shadow-lg hover:scale-[1.02] active:scale-[0.98]">
-              Upload Timetable
-            </button>
-            <span class="text-xs sm:text-sm font-semibold text-zinc-300 font-grand glass-card px-4 py-2.5 rounded-xl border border-white/[0.08]">S7 CSE B</span>
-          </div>
-        </div>
-
       </div>
     </div>
 
-    <!-- ----------------- VIEW 3: PROFILE (WITH SETTINGS & SYNC) ----------------- -->
-    <div id="view-profile" class="hidden flex-1 overflow-y-auto p-8 flex flex-col items-center">
-      <div class="w-full max-w-5xl space-y-6">
-        
-        <!-- Profile Identity Card -->
-        <div class="glass-surface rounded-3xl p-7 shadow-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div class="flex items-center gap-4">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center text-white text-2xl font-grand shadow-xl shadow-indigo-950/60 border border-white/20">
-              <i class="ph-bold ph-user"></i>
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <h2 class="text-lg font-grand font-bold text-white">Student Account</h2>
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-wide bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 backdrop-blur-md">Active</span>
-              </div>
-              <p class="text-xs text-zinc-400 font-wide mt-1">
-                ID: <span class="text-indigo-300 font-grand font-semibold text-sm">P012CSOM23</span>
-              </p>
-            </div>
-          </div>
-
-          <!-- Linways Sync Button -->
-          <button onclick="triggerPortalSync()" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-grand font-semibold text-xs transition shadow-lg shadow-indigo-950/50 hover:scale-[1.02] active:scale-[0.98] border border-white/10">
-            <i class="ph ph-arrows-clockwise text-base" id="sync-icon"></i>
-            <span>Sync Linways Portal</span>
-          </button>
-        </div>
-
-        <!-- System & Simulation Tiles -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Simulation Lock Tile -->
-          <div class="p-6 glass-card rounded-2xl shadow-xl flex flex-col justify-between space-y-3">
-            <div>
-              <div class="flex items-center gap-2 text-indigo-400 text-xs font-grand font-bold uppercase tracking-wider mb-1">
-                <i class="ph-bold ph-lock-key"></i> Active Anchor Date
-              </div>
-              <h3 class="text-base font-grand font-bold text-white">Simulation Lock</h3>
-              <p class="text-xs text-zinc-400 mt-1 leading-relaxed font-wide">
-                Dates on or after this anchor are treated as upcoming classes for safe bunk and runway calculations.
-              </p>
-            </div>
-            <div class="pt-3 border-t border-white/[0.06] flex items-center justify-between">
-              <span class="text-xs text-zinc-500 font-wide">Locked Date:</span>
-              <span class="font-wide text-indigo-300 font-bold bg-indigo-950/40 px-3 py-1 rounded-lg border border-indigo-800/40 text-xs backdrop-blur-md">
-                2026-10-19
-              </span>
-            </div>
-          </div>
-
-          <!-- KTU Threshold Tile -->
-          <div class="p-6 glass-card rounded-2xl shadow-xl flex flex-col justify-between space-y-3">
-            <div>
-              <div class="flex items-center gap-2 text-emerald-400 text-xs font-grand font-bold uppercase tracking-wider mb-1">
-                <i class="ph-bold ph-shield-check"></i> KTU Criteria
-              </div>
-              <h3 class="text-base font-grand font-bold text-white">Minimum Attendance</h3>
-              <p class="text-xs text-zinc-400 mt-1 leading-relaxed font-wide">
-                Autonomous KTU criterion for semester exam eligibility without condonation fine.
-              </p>
-            </div>
-            <div class="pt-3 border-t border-white/[0.06] flex items-center justify-between">
-              <span class="text-xs text-zinc-500 font-wide">Threshold:</span>
-              <span class="font-wide text-emerald-400 font-bold bg-emerald-950/40 px-3 py-1 rounded-lg border border-emerald-800/40 text-xs backdrop-blur-md">
-                75.0%
-              </span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- ================= RIGHT SLIDING CALENDAR DRAWER (Dark Glassmorphic) ================= -->
+    <!-- ================= RIGHT SLIDING CALENDAR DRAWER ================= -->
     <div id="calendar-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[700px] lg:w-[780px] glass-surface border-l border-white/[0.1] shadow-[-25px_0_60px_rgba(0,0,0,0.8)] z-40 transform translate-x-full transition-transform duration-300 flex flex-col">
-      
-      <!-- Drawer Header -->
       <div class="px-6 py-4 border-b border-white/[0.08] flex items-center justify-between bg-black/20">
         <div class="flex items-center gap-4">
-          <span class="text-xl font-grand font-bold text-white tracking-wide drop-shadow-sm" id="cal-month-title">October</span>
+          <span class="text-xl font-grand font-bold text-white tracking-wide drop-shadow-sm" id="cal-month-title">--</span>
           <div class="flex items-center gap-1.5 text-zinc-400">
             <button onclick="changeMonth(-1)" class="p-1 hover:text-white transition">
               <i class="ph-bold ph-caret-left text-base"></i>
@@ -349,10 +569,7 @@
         </button>
       </div>
 
-      <!-- Calendar Content Area -->
       <div class="flex-1 overflow-y-auto p-6 space-y-5">
-        
-        <!-- Days of Week Header -->
         <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-zinc-400 font-wide">
           <div>MON</div>
           <div>TUE</div>
@@ -363,49 +580,61 @@
           <div class="text-rose-500 font-extrabold">SUN</div>
         </div>
 
-        <!-- Expanded Calendar Month Grid -->
         <div id="calendar-grid" class="grid grid-cols-7 gap-2.5 font-wide">
-          <!-- Rendered dynamically via JS with true glass tiles -->
         </div>
 
-        <!-- Legend Strip Below the Dates -->
-        <div class="flex items-center justify-between text-xs text-zinc-300 py-3 px-4 glass-card rounded-2xl border border-white/[0.08] font-wide">
-          <span class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-[4px] bg-emerald-400 shadow-[0_0_10px_#34d399] shrink-0"></span> Present
-          </span>
-          <span class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-[4px] bg-amber-400 shadow-[0_0_10px_#fbbf24] shrink-0"></span> Partial
-          </span>
-          <span class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-[4px] bg-rose-500 shadow-[0_0_10px_#f43f5e] shrink-0"></span> Absent
-          </span>
-          <span class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-[4px] bg-white shadow-[0_0_10px_#ffffff] shrink-0"></span> Holiday / Unmarked
-          </span>
+        <div class="flex items-center justify-between text-xs text-zinc-300 py-3 px-4 glass-card rounded-2xl border border-white/[0.08] font-wide select-none">
+          <div class="inline-flex items-center gap-2.5">
+            <span class="w-3 h-3 rounded-[4px] bg-emerald-400 shadow-[0_0_10px_#34d399] shrink-0"></span>
+            <span class="leading-none text-zinc-200">Present</span>
+          </div>
+          <div class="inline-flex items-center gap-2.5">
+            <span class="w-3 h-3 rounded-[4px] bg-amber-400 shadow-[0_0_10px_#fbbf24] shrink-0"></span>
+            <span class="leading-none text-zinc-200">Partial</span>
+          </div>
+          <div class="inline-flex items-center gap-2.5">
+            <span class="w-3 h-3 rounded-[4px] bg-rose-500 shadow-[0_0_10px_#f43f5e] shrink-0"></span>
+            <span class="leading-none text-zinc-200">Absent</span>
+          </div>
+          <div class="inline-flex items-center gap-2.5">
+            <span class="w-3 h-3 rounded-[4px] bg-white shadow-[0_0_10px_#ffffff] shrink-0"></span>
+            <span class="leading-none text-zinc-200">Holiday / Unmarked</span>
+          </div>
         </div>
 
-        <!-- Selected Date Period Inspector Drawer -->
         <div id="date-details-panel" class="hidden p-4 rounded-2xl glass-card border border-white/[0.1] space-y-3 font-wide shadow-xl">
           <div class="flex items-center justify-between border-b border-white/[0.08] pb-2.5">
             <span class="font-grand font-bold text-sm text-white" id="inspected-date-label">--</span>
             <span class="text-[10px] font-wide px-2.5 py-0.5 rounded-full" id="inspected-date-badge">--</span>
           </div>
           <div id="inspected-periods-container" class="space-y-2">
-            <!-- Periods populated dynamically -->
           </div>
         </div>
-
       </div>
     </div>
 
-    <!-- Right Edge Calendar Dock Button -->
-    <button 
-      onclick="toggleCalendarDrawer()" 
-      class="fixed right-0 top-1/2 -translate-y-1/2 glass-surface hover:bg-white/[0.08] border-l border-y border-white/[0.08] text-zinc-300 hover:text-white px-2 py-4 rounded-l-2xl z-30 transition shadow-2xl flex items-center justify-center gap-1 text-[11px] font-grand font-semibold tracking-wider uppercase select-none"
-    >
-      <span class="vertical-writing-lr">Calendar</span>
-      <i class="ph-bold ph-caret-left text-xs"></i>
-    </button>
+    <!-- Right Edge Fixed Dock Buttons -->
+    <div class="fixed right-0 top-32 z-30 flex flex-col gap-2">
+      <!-- Calendar Dock -->
+      <button 
+        onclick="toggleCalendarDrawer()" 
+        class="glass-surface hover:bg-white/[0.08] border-l border-y border-white/[0.08] text-zinc-300 hover:text-white px-2.5 py-4 rounded-l-2xl transition shadow-2xl flex items-center justify-center gap-1.5 select-none backdrop-blur-md group"
+        title="Open Calendar"
+      >
+        <span class="vertical-writing-lr text-[11px] font-grand font-semibold tracking-wider uppercase">Calendar</span>
+        <i class="ph-bold ph-caret-left text-xs text-indigo-400 group-hover:text-indigo-300 group-hover:-translate-x-0.5 transition-transform"></i>
+      </button>
+
+      <!-- Timetable Dock -->
+      <button 
+        onclick="toggleTimetableDrawer()" 
+        class="glass-surface hover:bg-white/[0.08] border-l border-y border-white/[0.08] text-zinc-300 hover:text-white px-2.5 py-4 rounded-l-2xl transition shadow-2xl flex items-center justify-center gap-1.5 select-none backdrop-blur-md group"
+        title="Open Timetable"
+      >
+        <span class="vertical-writing-lr text-[11px] font-grand font-semibold tracking-wider uppercase">Timetable</span>
+        <i class="ph-bold ph-caret-left text-xs text-amber-400 group-hover:text-amber-300 group-hover:-translate-x-0.5 transition-transform"></i>
+      </button>
+    </div>
 
   </main>
 
@@ -413,8 +642,11 @@
   <script>
     let calendarStore = {};
     let timetableStore = {};
-    let activeMonthDate = new Date(2026, 9, 1); // October 2026 default
-    const anchorDateStr = "2026-10-19";
+    let currentSettings = { startdate: null, enddate: null, attendancethreshold: 75.0 };
+    let hasCalendarData = false;
+    let hasTimetableData = false;
+    let activeMonthDate = new Date();
+    let anchorDateStr = new Date().toISOString().split('T')[0];
     let selectedDateStr = null;
     const sessionId = "session_" + Math.random().toString(36).substring(2, 9);
 
@@ -429,15 +661,14 @@
       setTimeout(() => toast.classList.add('hidden'), 4000);
     }
 
-    // --- View Navigation with Glowing Indicator ---
+    // --- View Navigation ---
     function switchView(viewName) {
-      const views = ['chat', 'timetable', 'profile'];
+      const views = ['chat', 'settings'];
       views.forEach(v => {
         document.getElementById(`view-${v}`).classList.add('hidden');
         const nav = document.getElementById(`nav-${v}`);
         const pill = document.getElementById(`nav-${v}-pill`);
-        
-        nav.className = "w-full relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition text-zinc-400 hover:text-white hover:bg-white/[0.04]";
+        if (nav) nav.className = "w-full relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition text-zinc-400 hover:text-white hover:bg-white/[0.04]";
         if (pill) pill.classList.add('hidden');
       });
 
@@ -445,27 +676,248 @@
       const activeNav = document.getElementById(`nav-${viewName}`);
       const activePill = document.getElementById(`nav-${viewName}-pill`);
 
-      activeNav.className = "w-full relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition active-nav-glow text-white shadow-sm overflow-hidden";
+      if (activeNav) activeNav.className = "w-full relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition active-nav-glow text-white shadow-sm overflow-hidden";
       if (activePill) activePill.classList.remove('hidden');
 
-      if (viewName === 'timetable') {
-        loadTimetable();
+      if (viewName === 'settings') {
+        loadSettings();
       }
     }
 
-    // --- Calendar Drawer Toggle ---
+    // --- Dynamic User Profile Fetcher ---
+    async function loadUserProfile() {
+      try {
+        let res = await fetch('/api/profile');
+        if (!res.ok) {
+          res = await fetch('/api/user');
+        }
+        if (res.ok) {
+          const data = await res.json();
+          applyUserData(data);
+        }
+      } catch (err) {
+        console.warn("User profile endpoint unavailable, awaiting settings fallback.");
+      }
+    }
+
+    function applyUserData(data) {
+      if (!data) return;
+      const name = data.name || data.studentname || data.fullname;
+      if (name) {
+        const el = document.getElementById('user-fullname');
+        if (el) el.textContent = name;
+      }
+
+      const username = data.username || data.studentid || data.student_id;
+      if (username) {
+        const el = document.getElementById('cred-username');
+        if (el) el.value = username;
+      }
+
+      const sem = data.semester || data.sem || "S7";
+      const branch = data.branch || data.department || "CS";
+      const batch = data.batch || data.section || `${branch} ${data.section || 'A'}`.trim();
+
+      const sideSem = document.getElementById('sidebar-semester-branch');
+      if (sideSem) sideSem.textContent = `${sem} ${branch}`.trim();
+
+      const ttBatch = document.getElementById('timetable-batch-title');
+      if (ttBatch) ttBatch.textContent = batch;
+
+      const ttSem = document.getElementById('timetable-sem-badge');
+      if (ttSem) ttSem.textContent = sem;
+    }
+
+    // --- Settings API Handlers ---
+    let initialSettings = { startdate: null, enddate: null, attendancethreshold: 75.0 };
+
+    async function loadSettings() {
+      try {
+        const res = await fetch('/api/settings');
+        const data = await res.json();
+        currentSettings = data;
+        
+        // Also apply profile information if provided in settings response
+        if (data.name || data.studentname || data.college || data.studentid) {
+          applyUserData(data);
+        }
+
+        initialSettings = {
+          startdate: data.startdate || null,
+          enddate: data.enddate || null,
+          attendancethreshold: data.attendancethreshold !== undefined ? parseFloat(data.attendancethreshold) : 75.0
+        };
+
+        if (data.startdate) document.getElementById('settingStartDate').value = data.startdate;
+        if (data.enddate) document.getElementById('settingEndDate').value = data.enddate;
+        if (data.attendancethreshold !== undefined) {
+          const val = parseFloat(data.attendancethreshold).toFixed(1);
+          document.getElementById('settingThreshold').value = data.attendancethreshold;
+          document.getElementById('thresholdValue').innerText = val + '%';
+          const liveInd = document.getElementById('sliderLiveIndicator');
+          if (liveInd) liveInd.innerText = `Current: ${val}%`;
+        }
+        checkSettingsChanged();
+      } catch (err) {
+        console.error("Failed to load settings:", err);
+      }
+    }
+
+    function checkSettingsChanged() {
+      const startVal = document.getElementById('settingStartDate').value || null;
+      const endVal = document.getElementById('settingEndDate').value || null;
+      const threshVal = parseFloat(document.getElementById('settingThreshold').value);
+
+      const isChanged = (startVal !== initialSettings.startdate) ||
+                        (endVal !== initialSettings.enddate) ||
+                        (Math.abs(threshVal - initialSettings.attendancethreshold) > 0.01);
+
+      const saveBtn = document.getElementById('save-settings-btn');
+      if (saveBtn) {
+        if (isChanged) {
+          saveBtn.disabled = false;
+          saveBtn.className = "w-full py-3.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.16] border border-white/[0.2] text-white font-wide font-semibold text-xs sm:text-sm transition shadow-lg cursor-pointer opacity-100 hover:scale-[1.01] active:scale-[0.99]";
+        } else {
+          saveBtn.disabled = true;
+          saveBtn.className = "w-full py-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.05] text-zinc-500 font-wide font-semibold text-xs sm:text-sm transition cursor-not-allowed opacity-50";
+        }
+      }
+    }
+
+    function onThresholdSliderInput(val) {
+      const formatted = parseFloat(val).toFixed(1) + '%';
+      document.getElementById('thresholdValue').innerText = formatted;
+      const liveInd = document.getElementById('sliderLiveIndicator');
+      if (liveInd) liveInd.innerText = `Current: ${formatted}`;
+      checkSettingsChanged();
+    }
+
+    async function saveSettings() {
+      const payload = {
+        startdate: document.getElementById('settingStartDate').value || null,
+        enddate: document.getElementById('settingEndDate').value || null,
+        attendancethreshold: parseFloat(document.getElementById('settingThreshold').value)
+      };
+
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          showToast("Recalibration saved successfully!");
+          await loadSettings();
+          await loadCalendar();
+        } else {
+          const err = await res.json();
+          showToast(err.detail || "Failed to update settings.", true);
+        }
+      } catch (err) {
+        showToast("Network error updating settings.", true);
+      }
+    }
+
+    // --- Upload Warning & Reset Confirmation Handlers ---
+    let pendingUploadType = null; // 'schedule' or 'timetable'
+
+    function promptUploadWarning(type) {
+      pendingUploadType = type;
+      const modal = document.getElementById('uploadConfirmModal');
+      const title = document.getElementById('uploadConfirmTitle');
+      const msg = document.getElementById('uploadConfirmMessage');
+
+      if (type === 'schedule') {
+        title.textContent = 'Reset Academic Calendar?';
+        msg.innerHTML = 'Uploading a new KTU academic schedule will <strong class="text-rose-400">erase all custom declared holidays, manual exam overrides, and date adjustments</strong>. The entire semester calendar will be restored to default working days.';
+      } else if (type === 'timetable') {
+        title.textContent = 'Reset Weekly Timetable?';
+        msg.innerHTML = 'Uploading a new timetable will <strong class="text-rose-400">erase all custom period slots, subject mappings, and manual slot edits</strong> across Monday through Saturday. The weekly timetable will be reset to default configuration.';
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeUploadConfirmModal() {
+      const modal = document.getElementById('uploadConfirmModal');
+      modal.classList.add('hidden');
+      pendingUploadType = null;
+    }
+
+    function proceedUpload() {
+      const type = pendingUploadType;
+      closeUploadConfirmModal();
+
+      if (type === 'schedule') {
+        const input = document.getElementById('schedule-upload-input');
+        input.value = ''; // clear previous selection to trigger onchange consistently
+        input.click();
+      } else if (type === 'timetable') {
+        const input = document.getElementById('timetable-upload-input');
+        input.value = ''; // clear previous selection to trigger onchange consistently
+        input.click();
+      }
+    }
+
+    function handleScheduleUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      showToast(`Uploading ${file.name}...`);
+      setTimeout(() => {
+        showToast(`Calendar overwritten and restored to default schedule from ${file.name}!`);
+        loadCalendar();
+      }, 1000);
+    }
+
+    function handleTimetableUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      showToast(`Uploading timetable ${file.name}...`);
+      setTimeout(() => {
+        showToast(`Timetable slots reset and updated from ${file.name}!`);
+        loadTimetable();
+      }, 1000);
+    }
+
+    // --- Guarded Drawer Toggles ---
     function toggleCalendarDrawer(forceState = null) {
       const drawer = document.getElementById('calendar-drawer');
       const isClosed = drawer.classList.contains('translate-x-full');
-      if (forceState === true || (forceState === null && isClosed)) {
+      const opening = (forceState === true || (forceState === null && isClosed));
+
+      if (opening) {
+        if (!hasCalendarData || !calendarStore || Object.keys(calendarStore).length === 0) {
+          showToast("upload that in settings", true);
+          return;
+        }
         drawer.classList.remove('translate-x-full');
+        toggleTimetableDrawer(false);
         renderCalendar();
       } else {
         drawer.classList.add('translate-x-full');
       }
     }
 
-    // --- Subject Name Formatting Helper ---
+    function toggleTimetableDrawer(forceState = null) {
+      const drawer = document.getElementById('timetable-drawer');
+      const isClosed = drawer.classList.contains('translate-x-full');
+      const opening = (forceState === true || (forceState === null && isClosed));
+
+      if (opening) {
+        if (!hasTimetableData || !timetableStore || Object.keys(timetableStore).length === 0) {
+          showToast("upload that in settings", true);
+          return;
+        }
+        drawer.classList.remove('translate-x-full');
+        toggleCalendarDrawer(false);
+        renderTimetable();
+      } else {
+        drawer.classList.add('translate-x-full');
+      }
+    }
+
+    // --- Helper Functions ---
     function formatSubjectName(subject) {
       if (!subject) return 'Free';
       if (typeof subject === 'object') {
@@ -483,7 +935,6 @@
       );
     }
 
-    // --- Response Sanitization ---
     function parseResponseText(raw) {
       if (!raw) return '';
       if (Array.isArray(raw)) {
@@ -516,14 +967,29 @@
         .replace(/\n/g, '<br>');
     }
 
-    // --- Calendar Loading & Color Rules (True Glassmorphism) ---
+    // --- Calendar Loading & Rendering ---
     async function loadCalendar() {
       try {
         const res = await fetch('/api/calendar', { method: 'POST' });
-        const data = await res.json();
-        calendarStore = data.calendar || {};
-        renderCalendar();
+        if (res.ok) {
+          const data = await res.json();
+          calendarStore = data.calendar || {};
+          const dates = Object.keys(calendarStore);
+          hasCalendarData = dates.length > 0;
+
+          if (hasCalendarData) {
+            // Anchor view to latest date in calendar if present
+            const sorted = dates.sort();
+            const lastDate = new Date(sorted[sorted.length - 1]);
+            activeMonthDate = new Date(lastDate.getFullYear(), lastDate.getMonth(), 1);
+            anchorDateStr = sorted[sorted.length - 1];
+            renderCalendar();
+          }
+        } else {
+          hasCalendarData = false;
+        }
       } catch (err) {
+        hasCalendarData = false;
         console.error("Failed to load calendar:", err);
       }
     }
@@ -561,23 +1027,31 @@
         const cell = document.createElement('div');
         cell.onclick = () => inspectDatePeriods(dateStr, dayData);
 
-        // Dark glass default tile style
         let cellBg = "glass-tile";
         let dateColor = "text-white";
         let labelText = "";
+        let labelColor = "text-zinc-500";
 
         const isAnchorToday = (dateStr === anchorDateStr);
         const isSelected = (dateStr === selectedDateStr);
 
         if (dayData) {
-          if (dayData.status === "holiday") {
-            // Translucent tinted holiday glass
+          const isExam = dayData.status === "exam" || 
+                         (dayData.reason && dayData.reason.toLowerCase().includes("exam")) ||
+                         (dayData.periods && dayData.periods.some(p => p.subject && p.subject.toLowerCase().includes("exam")));
+
+          if (isExam) {
+            cellBg = "bg-purple-950/25 border-purple-800/40 backdrop-blur-md hover:border-purple-600/60";
+            dateColor = "text-emerald-400";
+            labelText = dayData.reason ? dayData.reason.substring(0, 10) : "Exam";
+            labelColor = "text-purple-400 font-semibold font-grand";
+          } else if (dayData.status === "holiday") {
             cellBg = "bg-rose-500/[0.07] backdrop-blur-md border border-rose-500/20 shadow-[inset_0_1px_0_0_rgba(244,63,94,0.15)] hover:bg-rose-500/[0.12]";
             dateColor = "text-white";
             labelText = dayData.reason ? dayData.reason.substring(0, 12) : "Holiday";
+            labelColor = "text-rose-400/80 font-medium";
           } else if (dayData.status === "working") {
             const periods = (dayData.periods || []).filter(p => p.subject && p.subject !== 'free');
-            
             if (periods.length > 0) {
               const presentCount = periods.filter(p => p.attendance === 'present').length;
               const absentCount = periods.filter(p => p.attendance === 'absent').length;
@@ -595,10 +1069,10 @@
           }
         }
 
-        // Anchor Date Gradient Glass Styling
         if (isAnchorToday) {
           cellBg = "bg-gradient-to-b from-purple-300/90 to-indigo-500/90 backdrop-blur-xl border border-white/40 shadow-[0_0_30px_rgba(168,85,247,0.4),inset_0_1px_0_0_rgba(255,255,255,0.7)]";
           dateColor = "text-black font-extrabold";
+          labelColor = "text-black font-semibold";
         }
 
         const borderRing = isSelected ? "ring-2 ring-indigo-400 border-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.4)]" : "";
@@ -609,7 +1083,7 @@
             <span class="text-sm font-grand font-bold ${dateColor}">${d}</span>
             ${isAnchorToday ? '<span class="w-1.5 h-1.5 rounded-full bg-black"></span>' : ''}
           </div>
-          <div class="text-[10px] font-wide ${isAnchorToday ? 'text-black font-semibold' : 'text-zinc-500'} truncate leading-tight">${labelText}</div>
+          <div class="text-[10px] ${labelColor} truncate leading-tight">${labelText}</div>
         `;
         grid.appendChild(cell);
       }
@@ -637,39 +1111,66 @@
 
       badge.textContent = dayData.status.toUpperCase();
       badge.className = `text-[10px] font-wide px-2.5 py-0.5 rounded-full ${
-        dayData.status === 'working' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 backdrop-blur-md' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20 backdrop-blur-md'
+        dayData.status === 'working' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 backdrop-blur-md' :
+        dayData.status === 'exam' ? 'bg-purple-500/10 text-purple-300 border border-purple-500/20 backdrop-blur-md' :
+        'bg-rose-500/10 text-rose-400 border border-rose-500/20 backdrop-blur-md'
       }`;
 
       if (dayData.status === "holiday") {
-        container.innerHTML = `<p class="text-xs text-rose-400 py-1 font-wide">Non-working: <strong class="font-grand">${dayData.reason || 'Declared Holiday'}</strong></p>`;
+        container.innerHTML = `<p class="text-xs text-rose-400 py-2 font-wide">Non-working: <strong class="font-grand">${dayData.reason || 'Declared Holiday'}</strong></p>`;
         return;
       }
 
       (dayData.periods || []).forEach(p => {
         let attColor = "text-zinc-400";
-        if (p.attendance === 'present') attColor = "text-emerald-400 font-bold";
-        if (p.attendance === 'absent') attColor = "text-rose-500 font-bold";
+        let attBg = "bg-white/[0.04] border-white/[0.06]";
+
+        if (p.attendance === 'present') {
+          attColor = "text-emerald-400";
+          attBg = "bg-emerald-500/10 border border-emerald-500/20";
+        } else if (p.attendance === 'absent') {
+          attColor = "text-rose-500";
+          attBg = "bg-rose-500/10 border border-rose-500/20";
+        }
 
         const formattedSubject = formatSubjectName(p.subject);
 
         const div = document.createElement('div');
-        div.className = "flex items-center justify-between text-xs p-2.5 rounded-xl glass-tile font-wide";
+        div.className = "flex items-center justify-between p-3.5 sm:p-4 rounded-2xl glass-tile font-wide border border-white/[0.06] transition hover:border-white/[0.15]";
         div.innerHTML = `
-          <span>Period ${p.slot}: <strong class="text-white font-grand">${formattedSubject}</strong></span>
-          <span class="${attColor} uppercase text-[11px] font-wide font-bold">${p.attendance}</span>
+          <div class="flex items-center gap-3.5">
+            <span class="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-lg font-grand font-bold text-indigo-400/90 shadow-inner">
+              ${p.slot}
+            </span>
+            <span class="text-sm font-grand font-bold text-white tracking-wide">
+              ${formattedSubject}
+            </span>
+          </div>
+          <span class="${attColor} ${attBg} uppercase text-[10px] font-grand font-bold px-3 py-1 rounded-xl tracking-wider">
+            ${p.attendance}
+          </span>
         `;
         container.appendChild(div);
       });
     }
 
-    // --- Timetable Rendering ---
+    // --- Timetable Drawer Rendering ---
     async function loadTimetable() {
       try {
         const res = await fetch('/api/timetable');
-        const data = await res.json();
-        timetableStore = data.timetable || {};
-        renderTimetable();
+        if (res.ok) {
+          const data = await res.json();
+          timetableStore = data.timetable || {};
+          const keys = Object.keys(timetableStore);
+          hasTimetableData = keys.length > 0;
+          if (hasTimetableData) {
+            renderTimetable();
+          }
+        } else {
+          hasTimetableData = false;
+        }
       } catch (err) {
+        hasTimetableData = false;
         console.error("Failed to load timetable:", err);
       }
     }
@@ -700,7 +1201,7 @@
       });
     }
 
-    // --- Chatbot Processing (Dark Glassmorphic Bubbles) ---
+    // --- Chatbot Processing ---
     async function handleChatSubmit(e) {
       e.preventDefault();
       const input = document.getElementById('chat-input');
@@ -724,10 +1225,7 @@
         if (res.ok) {
           appendChatMessage("assistant", data.text, data.widget);
           loadCalendar();
-          const ttView = document.getElementById('view-timetable');
-          if (ttView && !ttView.classList.contains('hidden')) {
-            loadTimetable();
-          }
+          loadTimetable();
         } else {
           appendChatMessage("assistant", data.detail || "I encountered an issue processing your request.");
         }
@@ -757,7 +1255,6 @@
           widgetHtml = renderUnmarkedWidget(widget.unmarked);
         }
 
-        // Bot message container with genuine dark glass styling
         msgDiv.innerHTML = `
           <div class="glass-surface text-indigo-100 px-5 py-3 rounded-2xl rounded-tl-sm max-w-[90%] sm:max-w-[75%] leading-relaxed border border-indigo-500/25 shadow-2xl text-xs space-y-2.5">
             <div class="font-wide">${formatMarkdown(cleanText)}</div>
@@ -850,7 +1347,7 @@
       if (el) el.remove();
     }
 
-    // --- Portal Sync (Inside Profile) ---
+    // --- Portal Sync ---
     async function triggerPortalSync() {
       const icon = document.getElementById('sync-icon');
       if (icon) icon.classList.add('animate-spin');
@@ -861,6 +1358,8 @@
           showToast(data.message || "Sync complete!");
           loadCalendar();
           loadTimetable();
+          loadSettings();
+          loadUserProfile();
         } else {
           showToast(data.detail || "Sync failed.", true);
         }
@@ -871,8 +1370,13 @@
       }
     }
 
-    // Initial Load
-    loadCalendar();
+    // Initial Parallel Loading
+    window.addEventListener('DOMContentLoaded', () => {
+      loadUserProfile();
+      loadSettings();
+      loadCalendar();
+      loadTimetable();
+    });
   </script>
 </body>
 </html>
