@@ -10,48 +10,6 @@ lockeddate=date(2026, 10, 19)
 tomorrowdate=lockeddate+timedelta(days=1)
 studentid="P012CSOM23"
 
-def getstudentsettings(studentid: str)->Dict[str, Any]:
-    studentobj,studentdetails=getstudentdata(studentid)
-    if not studentdetails.exists:
-        return {
-            "startdate": None,
-            "enddate": None,
-            "attendancethreshold": 75.0,
-        }
-
-    studentdata=studentdetails.to_dict()
-    calendar=studentdata.get("studentcalendar",{})
-    settings=studentdata.get("settings",{})
-
-    calendardates=sorted(calendar.keys())
-    defaultstart=calendardates[0] if calendardates else None
-    defaultend=calendardates[-1] if calendardates else None
-
-    print(f"Start Date: {defaultstart}")
-    print(f"End Date: {defaultend}")
-
-    return {
-        "startdate": settings.get("startdate") or defaultstart,
-        "enddate": settings.get("enddate") or defaultend,
-        "attendancethreshold": float(settings.get("attendancethreshold", 75.0)),
-    }
-
-def updatestudentsettings(studenid: str, startdate: Optional[str]=None, enddate: Optional[str]=None,attendancethreshold: Optional[float]=None,)->bool:
-    studentobj,studentdetails=getstudentdata(studentid)
-    if not studentdetails.exists:
-        return False
-
-    currentsettings=getstudentsettings(studenid)
-
-    updatedsettings={
-        "startdate": startdate if startdate else currentsettings["startdate"],
-        "enddate": enddate if enddate else currentsettings["enddate"],
-        "attendancethreshold":float(attendancethreshold) if attendancethreshold else currentsettings["attendancethreshold"]
-    }
-
-    studentobj.update({"settings": updatedsettings})
-    return True
-
 #for normalizing subject names by stripping unwanted 
 def normalizesubjectnames(name:str) -> str:
     if not name:
