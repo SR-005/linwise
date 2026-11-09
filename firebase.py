@@ -9,6 +9,11 @@ db=firestore.client()
 
 STUDENTID="P012CSOM23"
 
+def getstudentcredentials(username: str):
+    userobj=db.collection("users").document(username)
+    userdetails=userobj.get()
+    return userobj, userdetails
+
 def getstudentdata(studentid: str):
     studentobj=db.collection("students").document(studentid)
     studentdetails=studentobj.get()
